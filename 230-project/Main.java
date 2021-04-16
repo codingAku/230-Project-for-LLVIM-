@@ -63,54 +63,32 @@ public static void calculation(ArrayList<String> islem){
      }
 }
 //this method handles calculations while replacing the results with calculations like 4*3 is replaced with 12
+//works fine if there is no pharanthesis in the expression
 public static String aticine(String ali){
-    ArrayList<String> islem = new ArrayList<String>();
-    String son = "";
+    ArrayList<String> son = new ArrayList<String>();
 
-        //first tokening to + -
+        //first tokning to + -
         if(ali.contains("+") ||ali.contains("-") ){
-            StringTokenizer parser = new StringTokenizer(ali, "+-", false);
+            StringTokenizer parser = new StringTokenizer(ali, "+-", true);
             while(parser.hasMoreTokens()){
+                ArrayList<String> islem = new ArrayList<String>();
                 String ayse = parser.nextToken();
                 if(ayse.contains("*") || ayse.contains("/")){
+                    //below 5 lines can be done with split, will reduce space and time (wpnt require islem arraylist)
                     StringTokenizer parser2 = new StringTokenizer(ayse, "*/", true);
                     while(parser2.hasMoreTokens()){
                         islem.add(parser2.nextToken());
-                       
                     }
-                    
-                    calculation(islem);
-                
-                
-                // I cant replace the czlculation with string here
-                String birlesme = "";
-                son = islem.get(0) + birlesme;
-                islem.remove(0);
+                    calculation(islem);                
+                    // I cant replace the calculation with string here
+                    son.add(islem.get(0));
                 }
-                
+                son.add(ayse);
             }
-
-
-
         }
         //if code is here, this means there is no * or / left
-        while(son.contains("+") || son.contains("-")){
-            StringTokenizer parser = new StringTokenizer(son, "+-", true);
-            while(parser.hasMoreTokens()){
-                String kayboldum = parser.nextToken();
-                islem.add(kayboldum);
-            }
-            calculation(islem);
-                son =islem.get(0);
-                islem.remove(0);
 
-            
-        
-        }
-        
-        ali = son;
-        return ali;
+        calculation(son);
+        return son.get(0);
        // System.out.println(ali);
-
-}
 }
