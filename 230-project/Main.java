@@ -1,17 +1,40 @@
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 
 public class Main {
+    static ArrayList<String> declaredVariables = new ArrayList<String>();
+    static HashMap<String, Integer> temporaryVariables = new HashMap<String, Integer>();
+    public static int number = 0;
+    public static boolean flag = false;
     public static void main(String[] args) {
-        String ece = "4+(4*3+5)*7-(5/2)";
-        // here I handle parantheses
+        String ece = "x =4+(4*3+5)*7";
+        String declaration2 = "a = 5";
+        String declaration = "a=4+b";
+       // System.out.println(ece);
+       // ece = aticine(ece);
+        
+        
+        if(ece.contains("=")){
+            StringTokenizer dec = new StringTokenizer(ece, "=", false);
+            String varName = dec.nextToken();
+            String value = dec.nextToken();
+            if(value.contains("+")||value.contains("-")||value.contains("/")||value.contains("*")){
+                value = removeParan(value);
+                System.out.println(value);
+                aticine(value);
+                System.out.println("store t" + --number + " " +varName +  " bişe bişe"  );
+            }
+            declaredVariables.add(varName);
+        }
 
-        ece = removeParan(ece);
-        ece = aticine(ece);
-        System.out.println(ece);
 
     }
+
+
+
+
      // here I handle parantheses
     public static String removeParan(String ece) {
         while (ece.contains("(")) {
@@ -30,40 +53,49 @@ public class Main {
     public static void calculation(ArrayList<String> islem) {
         while (islem.size() != 1) {
             int i = 0;
-            System.out.println("load falan filan &t bişe");
             int a = Integer.parseInt(islem.get(i));
-            System.out.println("load falan filan &t bişe");
+            if(!flag){
+            System.out.println("load falan filan &t"+ number++ + " bişe");
+            }   
+            System.out.println("load falan filan &t"+ number++ + " bişe");    
             int b = Integer.parseInt(islem.get(i + 2));
             String exp = islem.get(i + 1);
             switch (exp) {
 
             case "*":
-                System.out.println("çarpma falan filan &t bişe");
+            
+                System.out.println("çarpma falan filan &t" + (number-2) +" t"+ (number-1) + " t"+ number++ + "bişe");
                 String e = Integer.toString(a * b);
+                flag = true;
                 islem.set(0, e);
                 islem.remove(i + 1);
                 islem.remove(i + 1);
                 break;
             case "/":
-                System.out.println("bölme falan filan &t bişe");
-                String e1 = Integer.toString(a / b);
+            System.out.println("bölme falan filan &t" + (number-2) +" t"+ (number-1) + " t"+ number++ + "bişe");
+            String e1 = Integer.toString(a / b);
                 islem.set(0, e1);
+                flag = true;
                 islem.remove(i + 1);
                 islem.remove(i + 1);
                 break;
             case "+":
-                System.out.println("toplama falan filan &t bişe");
-                String e3 = Integer.toString(a + b);
+            System.out.println("toplama falan filan &t" + (number-2) +" t"+ (number-1) + " t"+ number++ + "bişe");
+            String e3 = Integer.toString(a + b);
                 islem.set(0, e3);
                 islem.remove(i + 1);
                 islem.remove(i + 1);
+                flag = true;
+
                 break;
             case "-":
-                System.out.println("çıkarma falan filan &t bişe");
-                String e4 = Integer.toString(a - b);
+            System.out.println("çıkarma falan filan &t" + (number-2) +" t"+ (number-1) + " t"+ number + "bişe");
+            String e4 = Integer.toString(a - b);
                 islem.set(0, e4);
                 islem.remove(i + 1);
                 islem.remove(i + 1);
+                flag = true;
+
                 break;
             }
 
@@ -92,6 +124,7 @@ public class Main {
                     calculation(islem);
                     // I cant replace the calculation with string here
                     son.add(islem.get(0));
+
                 } else {
                     son.add(ayse);
                 }
@@ -110,6 +143,5 @@ public class Main {
 
         calculation(son);
         return son.get(0);
-        // System.out.println(ali);
     }
 }
