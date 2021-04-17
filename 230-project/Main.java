@@ -13,7 +13,7 @@ public class Main {
         String declaration2 = "a = 5";
         String declaration = "a=4+b";
        // System.out.println(ece);
-       // ece = aticine(ece);
+       // ece = parser(ece);
     
         
         if(ece.contains("=")){
@@ -24,7 +24,7 @@ public class Main {
                 //check here for invalid expressions
                 value = removeParan(value);
                 System.out.println(value);
-                aticine(value);
+                parser(value);
                 System.out.println("store i32 %t" + --number + ", i32* %" + varName);
             }
             declaredVariables.add(varName);
@@ -53,12 +53,12 @@ public class Main {
             int fis = ece.indexOf(")", 0);
             String ali = ece.substring(fi + 1, fis);
             // this part is just testing
-            ali = aticine(ali);
+            ali = parser(ali);
             ece = ece.substring(0, fi) + ali + ece.substring(fis + 1);
         }
         return ece;
     }
-
+    
     // this method takes an array and does the calculations inside it
     public static void calculation(ArrayList<String> islem) {
         while (islem.size() != 1) {
@@ -132,7 +132,7 @@ public class Main {
     // this method handles calculations while replacing the results with
     // calculations like 4*3 is replaced with 12
     // works fine if there is no pharanthesis in the expression
-    public static String aticine(String ali) {
+    public static String parser(String ali) {
         ArrayList<String> son = new ArrayList<String>();
 
         // first tokning to + -
