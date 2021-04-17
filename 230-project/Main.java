@@ -25,7 +25,7 @@ public class Main {
                 value = removeParan(value);
                 System.out.println(value);
                 aticine(value);
-                System.out.println("store t" + --number + " " +varName +  " bişe bişe"  );
+                System.out.println("store i32 %t" + --number + ", i32* %" + varName);
             }
             declaredVariables.add(varName);
         }
@@ -71,8 +71,8 @@ public class Main {
                 integerA = false;
             }
             if(!integerA && islem.get(i).charAt(0) != '%'){ //here means the variable is neither an integer nor a %t variable
-                    System.out.println("Load t"+ number +" the value of " + islem.get(i));
-                    islem.set(i, "%t"+number++);
+                System.out.println("Load %t"+ number +" = load i32* %" + islem.get(i));
+                islem.set(i, "%t"+number++);
             }
 
 
@@ -83,7 +83,7 @@ public class Main {
                 integerB = false;
             }
             if(!integerB && islem.get(i+2).charAt(0) != '%'){
-                System.out.println("Load t"+ number +" the value of " + islem.get(i+2));
+                System.out.println("Load %t"+ number +" = load i32* %" + islem.get(i+2));
                 islem.set(i+2, "%t"+ number++);
             }
 
@@ -92,7 +92,8 @@ public class Main {
             switch (exp) {
 
             case "*":
-                System.out.println("çarpma falan filan " + islem.get(i)  + "  " + islem.get(i+2) + "şuraya ata" + " t"+ number++ + "bişe");
+            //%t6 = add i32 %t4, %t5
+                System.out.println("%t"+ number++ + "= mul i32 " + islem.get(i)  + ", " + islem.get(i+2));
                 islem.set(0, "%t"+ (number-1));
                 islem.remove(i + 1);
                 islem.remove(i + 1);
@@ -100,7 +101,7 @@ public class Main {
 
                 break;
             case "/":
-            System.out.println("bölme falan filan &t" + islem.get(i)  + "  " + islem.get(i+2) + "şuraya ata" + " t"+ number++ + "bişe");
+            System.out.println("%t" + number++ + " = sdiv i32 "+ islem.get(i)  + ", " + islem.get(i+2));
                 islem.set(0, islem.set(0, "%t"+ (number-1)));
                 islem.remove(i + 1);
                 islem.remove(i + 1);
@@ -108,7 +109,7 @@ public class Main {
                 
                 break;
             case "+":
-                System.out.println("toplama falan filan &t" + islem.get(i)  + "  " + islem.get(i+2) + "şuraya ata" + " t"+ number++ + "bişe");
+                System.out.println("%t" + number++ + " = add i32 " + islem.get(i)  + ", " + islem.get(i+2));
                 islem.set(0, "%t"+ (number-1));
                 islem.remove(i + 1);
                 islem.remove(i + 1);
@@ -116,7 +117,7 @@ public class Main {
 
                 break;
             case "-":
-            System.out.println("çıkarma falan filan &t" + islem.get(i)  + "  " + islem.get(i+2) + "şuraya ata" + " t"+ number++ + "bişe");
+            System.out.println("%t" + number++ + " = sub i32 " + islem.get(i)  + ", " + islem.get(i+2));
                 islem.set(0, "%t"+ (number-1));
                 islem.remove(i + 1);
                 islem.remove(i + 1);
