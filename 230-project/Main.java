@@ -14,7 +14,8 @@ public class Main {
         String declaration = "a=4+b";
        // System.out.println(ece);
        // ece = aticine(ece);
-        
+       System.out.print(false);
+       System.out.print(false);        
         
         if(ece.contains("=")){
             StringTokenizer dec = new StringTokenizer(ece, "=", false);
@@ -32,8 +33,23 @@ public class Main {
 
     }
 
+    //returns 0 if int, 1 if variable name, 2 if erroneous name
+    public static int checkTypeValidity(String s){
+        String ints = "0123456789";
+        String alphabet = "abcdefghijklmnopqrstuvwxyz";
+        boolean integer = true;
 
-
+        for(int i = 0; i<s.length(); i++){
+            char ch = s.charAt(i);
+            if( ch <= 57 || ch >=48) continue;
+            else if (ch <= 122 || ch >= 97){
+                integer = false;
+            }else{
+                return 3;
+            }
+        }
+        return 3;
+    }
 
      // here I handle parantheses
     public static String removeParan(String ece) {
@@ -44,20 +60,18 @@ public class Main {
             // this part is just testing
             ali = aticine(ali);
             ece = ece.substring(0, fi) + ali + ece.substring(fis + 1);
-
         }
         return ece;
     }
 
     // this method takes an array and does the calculations inside it
     public static void calculation(ArrayList<String> islem) {
+        System.out.println("load falan filan &t"+ number++ + " bişe");
+        System.out.println("load falan filan &t"+ number++ + " bişe");
+
         while (islem.size() != 1) {
             int i = 0;
-            int a = Integer.parseInt(islem.get(i));
-            if(!flag){
-            System.out.println("load falan filan &t"+ number++ + " bişe");
-            }   
-            System.out.println("load falan filan &t"+ number++ + " bişe");    
+            int a = Integer.parseInt(islem.get(i));    
             int b = Integer.parseInt(islem.get(i + 2));
             String exp = islem.get(i + 1);
             switch (exp) {
@@ -112,6 +126,7 @@ public class Main {
         if (ali.contains("+") || ali.contains("-")) {
             StringTokenizer parser = new StringTokenizer(ali, "+-", true);
             while (parser.hasMoreTokens()) {
+                
                 ArrayList<String> islem = new ArrayList<String>();
                 String ayse = parser.nextToken();
                 if (ayse.contains("*") || ayse.contains("/")) {
