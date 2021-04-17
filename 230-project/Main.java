@@ -7,16 +7,14 @@ public class Main {
     static ArrayList<String> declaredVariables = new ArrayList<String>();
     static HashMap<String, Integer> temporaryVariables = new HashMap<String, Integer>();
     public static int number = 0;
-    public ArrayList<String> = new ArrayList<String>();
     public static boolean flag = false; // we must reset flag to false at each expression line, beware
     public static void main(String[] args) {
-        String ece = "x =4+(4*3+5)*7";
+        String ece = "x = b+(4*c+5)*7";
         String declaration2 = "a = 5";
         String declaration = "a=4+b";
        // System.out.println(ece);
        // ece = aticine(ece);
-       System.out.print(false);
-       System.out.print(false);        
+    
         
         if(ece.contains("=")){
             StringTokenizer dec = new StringTokenizer(ece, "=", false);
@@ -65,20 +63,27 @@ public class Main {
     public static void calculation(ArrayList<String> islem) {
         while (islem.size() != 1) {
             int i = 0;
+            
             boolean integerA = true;
-            //here check if islem.get(i) is an integer with ece's way
-            
-            
+            try{
+                int a = Integer.parseInt(islem.get(i));
+            }catch(NumberFormatException e){
+                integerA = false;
+            }
             if(!integerA && islem.get(i).charAt(0) != '%'){ //here means the variable is neither an integer nor a %t variable
-                    System.out.printn("Load t"+ number +" the value of " + islem.get(i));
+                    System.out.println("Load t"+ number +" the value of " + islem.get(i));
                     islem.set(i, "%t"+number++);
             }
 
+
             boolean integerB = true;
-            //here check if islem.get(i+2) is an integer with ece's way
-            
+            try{
+                int a = Integer.parseInt(islem.get(i+2));
+            }catch(NumberFormatException e){
+                integerB = false;
+            }
             if(!integerB && islem.get(i+2).charAt(0) != '%'){
-                System.out.printn("Load t"+ number +" the value of " + islem.get(i+2));
+                System.out.println("Load t"+ number +" the value of " + islem.get(i+2));
                 islem.set(i+2, "%t"+ number++);
             }
 
@@ -96,7 +101,7 @@ public class Main {
                 break;
             case "/":
             System.out.println("bölme falan filan &t" + islem.get(i)  + "  " + islem.get(i+2) + "şuraya ata" + " t"+ number++ + "bişe");
-                islem.set(0, islem.set(0, "%t"+ (number-1)););
+                islem.set(0, islem.set(0, "%t"+ (number-1)));
                 islem.remove(i + 1);
                 islem.remove(i + 1);
                 flag = true;
