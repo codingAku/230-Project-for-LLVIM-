@@ -1,22 +1,83 @@
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 
 public class Main {
     static HashSet<String> declaredVariables = new HashSet<String>();
     public static int number = 1;
     public static boolean flag = false; // we must reset flag to false at each expression line, beware
+    static ArrayList<String> outputs = new ArrayList<String>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         // String ece = "x = b+(4*c+5)*7";
         // String ece = "print(f1)";
         // String ece = "a=b";
-        String ece = "while(n)";
-        // System.out.println(ece);
-        conditioner(ece);
+        // String ece = "while(n)";
+        // outputs.add(ece);
+        // expression(ece);
+        File input = new File(args[0]);
+        Scanner x = new Scanner(input);
+        
+        PrintWriter writer = new PrintWriter(new File(args[1]));
 
+        int while_if = 0;
+        writer.println("; ModuleID = \'mylang2ir\' \n"+"declare i32 @printf(i8*, ...)\n"+"@print.str = constant [4 x i8] c\"%d\\0A\\00\" \n\n"+"define i32 @main() {");
+        while (x.hasNextLine()) {
+            String ece = x.nextLine();
+            ece = ece.replaceAll(" ", "");
+            ece = ece.replaceAll("\t", "");
+            if(ece.length()==0){continue;}
+            int type = typeChecker(ece);
+            switch (type) {
+            case 1:
+                expression(ece);
+                break;
+                case 2:
+                while_if = conditioner(ece);
+                break;
+                case 3:
+                if(while_if == 1){
+                    outputs.add("br label %whcond");
+                    outputs.add("\n");
+                    outputs.add("whend:" + "\n" + "\nret i32 0");
+                }else if(while_if == 2){
+                    outputs.add("br label %ifend");
+                }
+                break;
+                case 4:
+                print(ece);
+                break;
+
+            }
+        }
+        outputs.add("\n }");
+
+        for(String s: declaredVariables){ writer.println("%" + s + " = alloca i32");}
+        writer.println();
+        for(String s: declaredVariables) {writer.println("store i32 0, i32* %" + s);}
+        writer.println();
+
+        for(String s: outputs) writer.println(s);
+        writer.close();
+    }
+
+    public static int typeChecker(String ece) {
+        if (ece.contains("=")) {
+            return 1;
+        } else if (ece.contains("{")) {
+            return 2;
+        } else if (ece.contains("}")) {
+            return 3;
+        } else if(ece.contains("print")) {
+            return 4;
+        }else{
+            return 0;
+        }
     }
 
     public static void expression(String ece) {
@@ -25,13 +86,14 @@ public class Main {
             StringTokenizer dec = new StringTokenizer(ece, "=", false);
             String varName = dec.nextToken();
             String value = dec.nextToken();
+            String temporary = "";
             value = removeParan(value);
             boolean x = false;
-            aticine(value, x);
-            if (!x) {
-                System.out.println("store i32 %t" + --number + ", i32* %" + varName);
+            temporary = aticine(value, x);
+            if (temporary.charAt(0)!='~') {
+                outputs.add("store i32 %t" + (number-1) + ", i32* %" + varName);//burda bi bokluk var
             } else {
-                System.out.println("store i32 " + value + ", i32* %" + varName);
+                outputs.add("store i32 " + value + ", i32* %" + varName);
 
             }
             // }
@@ -44,39 +106,39 @@ public class Main {
         cond.nextToken();
         String printStatement = cond.nextToken();
         printStatement = aticine(printStatement, true);
-        System.out.println("call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 "
+        outputs.add("call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 "
                 + "%t" + (number - 1) + " )");
     }
 
     public static int conditioner(String ece) {
         StringTokenizer cond = new StringTokenizer(ece, "()", false);
         if (cond.nextToken().equals("while")) {
-            System.out.println("br label %whcond");
-            System.out.println();
+            outputs.add("br label %whcond");
+            outputs.add("\n");
             // StringTokenizer paran = new StringTokenizer(cond.nextToken(), "()", false);
-            System.out.println("whcond:");
+            outputs.add("whcond:");
             String test = cond.nextToken();
             aticine(test, true);
-            System.out.println("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
-            System.out.println("br i1 %t" + (number - 1) + ", label %whbody, label %whend");
-            System.out.println();
-            System.out.println("whbody:");
+            outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
+            outputs.add("br i1 %t" + (number - 1) + ", label %whbody, label %whend");
+            outputs.add("\n");
+            outputs.add("whbody:");
             // dont forget whend statement, check
-            return 0;
+            return 1;
 
         } else if (cond.nextToken().equals("if")) {
-            System.out.println("ifcond:");
+            outputs.add("ifcond:");
             String test = cond.nextToken();
             aticine(test, true);
             // is this always true or false? where do we set it false or true?
-            System.out.println("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
-            System.out.println("br i1 %t" + number++ + ", label %ifbody");
-            System.out.println();
-            System.out.println("ifbody:");
-            return 1;
+            outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
+            outputs.add("br i1 %t" + number++ + ", label %ifbody");
+            outputs.add("\n");
+            outputs.add("ifbody:");
+            return 2;
 
         }
-        return 2;
+        return 0;
 
     }
 
@@ -122,7 +184,7 @@ public class Main {
             } catch (NumberFormatException e) {
                 // integerA = false;
                 if (islem.get(i).charAt(0) != '%') { // here means the variable is neither an integer nor a %t variable
-                    System.out.println("Load %t" + number + " = load i32* %" + islem.get(i));
+                    outputs.add("%t" + number + " = load i32* %" + islem.get(i));
                     islem.set(i, "%t" + number++);
                 }
             }
@@ -132,7 +194,7 @@ public class Main {
                 int a = Integer.parseInt(islem.get(i + 2));
             } catch (NumberFormatException e) {
                 if (islem.get(i + 2).charAt(0) != '%') {
-                    System.out.println("Load %t" + number + " = load i32* %" + islem.get(i + 2));
+                    outputs.add("%t" + number + " = load i32* %" + islem.get(i + 2));
                     islem.set(i + 2, "%t" + number++);
                 }
                 // integerB = false;
@@ -144,7 +206,7 @@ public class Main {
 
             case "*":
                 // %t6 = add i32 %t4, %t5
-                System.out.println("%t" + number++ + "= mul i32 " + islem.get(i) + ", " + islem.get(i + 2));
+                outputs.add("%t" + number++ + "= mul i32 " + islem.get(i) + ", " + islem.get(i + 2));
                 islem.set(0, "%t" + (number - 1));
                 islem.remove(i + 1);
                 islem.remove(i + 1);
@@ -152,7 +214,7 @@ public class Main {
 
                 break;
             case "/":
-                System.out.println("%t" + number++ + " = sdiv i32 " + islem.get(i) + ", " + islem.get(i + 2));
+                outputs.add("%t" + number++ + " = sdiv i32 " + islem.get(i) + ", " + islem.get(i + 2));
                 islem.set(0, islem.set(0, "%t" + (number - 1)));
                 islem.remove(i + 1);
                 islem.remove(i + 1);
@@ -160,7 +222,7 @@ public class Main {
 
                 break;
             case "+":
-                System.out.println("%t" + number++ + " = add i32 " + islem.get(i) + ", " + islem.get(i + 2));
+                outputs.add("%t" + number++ + " = add i32 " + islem.get(i) + ", " + islem.get(i + 2));
                 islem.set(0, "%t" + (number - 1));
                 islem.remove(i + 1);
                 islem.remove(i + 1);
@@ -168,7 +230,7 @@ public class Main {
 
                 break;
             case "-":
-                System.out.println("%t" + number++ + " = sub i32 " + islem.get(i) + ", " + islem.get(i + 2));
+                outputs.add("%t" + number++ + " = sub i32 " + islem.get(i) + ", " + islem.get(i + 2));
                 islem.set(0, "%t" + (number - 1));
                 islem.remove(i + 1);
                 islem.remove(i + 1);
@@ -218,13 +280,13 @@ public class Main {
         } else { // for not expreessions like "n" in while in example
             try {
                 int a = Integer.parseInt(ali);
-                return ali;
+                return "~" + ali;
             } catch (NumberFormatException e) {
                 // integerA = false;
                 if (ali.charAt(0) != '%') { // here means the variable is neither an intger nor a %t variable
-                    System.out.println("%t" + number++ + " = load i32* %" + ali);
+                    outputs.add("%t" + number++ + " = load i32* %" + ali);
                     declaredVariables.add(ali);
-                    x = true;
+                   // x = true;
                     return ali;
                     // islem.set(i, "%t"+number++);
                 }
