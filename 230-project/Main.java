@@ -144,21 +144,14 @@ public class Main {
 
     // returns 0 if int, 1 if variable name, 2 if erroneous name
     public static int checkTypeValidity(String s) {
-        boolean integer = true;
         for (int i = 0; i < s.length(); i++) {
             char ch = s.charAt(i);
-            if (ch <= 57 || ch >= 48)
-                continue;
-            else if (ch <= 122 || ch >= 97)
-                integer = false;
-            else
-                return 2;
-        }
-        if (integer)
-            return 0;
-        else
+            if (!((ch <= 90 && ch >= 65) || (ch <= 122 && ch >= 97) || (ch <= 57 && ch >= 48)))
+                return 0;
+            }
             return 1;
     }
+
 
     // here I handle parantheses
     public static String removeParan(String ece) {
