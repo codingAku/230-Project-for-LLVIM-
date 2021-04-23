@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.lang.String;
 
 public class Main {
     static HashSet<String> declaredVariables = new HashSet<String>();
@@ -28,7 +29,7 @@ public class Main {
         int while_if = 0;
         int lineNum = 1;
 
-        while (x.hasNextLine()) {
+        while (x.hasNextLine() && !error) {
             String ece = x.nextLine();
             //ece = ece.replaceAll(" ", "");
             ece = ece.replaceAll("\t", " ");
@@ -42,6 +43,7 @@ public class Main {
                 if(!error) expression(ece);
                 else{
                     writer.println("Syntax error at line " + lineNum);
+                    writer.close();
                 }
                 break;
             case 2: //while/if entrance
@@ -58,16 +60,17 @@ public class Main {
                 }
                 break;
             case 4: //print
-                print(ece);
-                break;
+            print(ece);
+            break;
             default: // handles gibberish lines AND empty lines
-                ece.replaceAll(" ", "");
-                if(ece.length() != 0) error = true;
-                break;
-            }
-            lineNum++;
+            ece = ece.replaceAll(" ", "");
+            if(ece.length() != 0) error = true;
+            break;
         }
-
+        lineNum++;
+        }
+        
+        if(error) return;
         writer.println("; ModuleID = \'mylang2ir\' \n"+"declare i32 @printf(i8*, ...)\n"+"@print.str = constant [4 x i8] c\"%d\\0A\\00\" \n\n"+"define i32 @main() {");
         outputs.add("\n }");
 
@@ -75,16 +78,47 @@ public class Main {
         writer.println();
         for(String s: declaredVariables) {writer.println("store i32 0, i32* %" + s);}
         writer.println();
-
+        
         for(String s: outputs) writer.println(s);
         writer.close();
     }
+    
+
+    public static void assignmentCheck(String s){
+        System.out.println("BURDA DA MI "+ error);
+        StringTokenizer t = new StringTokenizer(s, "=", false);
+        if(t.countTokens() != 2){
+            error = true;
+            return;
+        }
+
+        String varName = t.nextToken();
+        if(checkTypeValidity(varName) != 1){
+            error = true;
+            System.out.println("HERE");
+            return;
+        }
+
+        expressionCheck(t.nextToken());
+        if(error) System.out.println("ERROR");
+    }
 
 
+    public static void expressionCheck(String s){
+        StringTokenizer tok = new StringTokenizer(s, "+/*-()", true);
+        String test = s;
+        test = test.replaceAll(" ", "");
+        if(test.length() == 0){ //if no expression exists, just spaces
+             error = true;
+             return;
+        }
+        removePhar(s);
+    }
+    
     public static void conditionCheck(String s){
-        s.replaceAll("(", " ( ");
-        s.replaceAll(")", " ) ");
-        s.replaceAll("{", " { ");
+        s = s.replaceAll("(", " ( ");
+        s = s.replaceAll(")", " ) ");
+        s = s.replaceAll("{", " { ");
         //StringTokenizer tok = new StringTokenizer(s, " ", false);
         if(!s.substring(0, s.indexOf(" ")).equals("while") || !s.substring(0, s.indexOf(" ")).equals("if")){
             error = true;
@@ -102,8 +136,8 @@ public class Main {
 
     private static void removePhar(String ece){
         while (ece.contains("(")) {
-            int fi = ece.indexOf("(", 0);
-            int fis = ece.indexOf(")", 0);
+            int fi = ece.indexOf("(");
+            int fis = ece.indexOf(")");
             if(fis == -1){
                 error = true;
                 return;
@@ -113,24 +147,21 @@ public class Main {
             ali = parser(ali);
             ece = ece.substring(0, fi) + ali + ece.substring(fis + 1);
         }
-
         if(ece.contains(")")) error = true;
         ece = parser(ece);
     }
 
 public static String parser(String ali) {
-        ArrayList<String> son = new ArrayList<String>();
         // first tokning to + -
         if (ali.contains("+") || ali.contains("-")) {
-            ali.replaceAll("+", " + ");
-            ali.replaceAll("-", " - ");
+            ali = ali.replaceAll("\\+", " + ");
+            ali = ali.replaceAll("\\-", " - ");
             StringTokenizer aticine = new StringTokenizer(ali, "+-", false);
             while (aticine.hasMoreTokens()) {
-                ArrayList<String> islem = new ArrayList<String>();
                 String ayse = aticine.nextToken();
                 if (ayse.contains("*") || ayse.contains("/")) {
-                    ali.replaceAll("*", " * ");
-                    ali.replaceAll("/", " / ");
+                    ali = ali.replaceAll("\\*", " * ");
+                    ali = ali.replaceAll("\\/", " / ");
         
                     StringTokenizer aticine2 = new StringTokenizer(ayse, "*/", false);
                     while (aticine2.hasMoreTokens()) {
@@ -138,11 +169,13 @@ public static String parser(String ali) {
                         StringTokenizer b = new StringTokenizer(a, " ", false); // this and below if checks a + b  c + d also operators sequential without num between
                         if(b.countTokens() != 1){
                             error = true;
+                            System.out.println("A");
                             return "";
                         }else{
                             a = a.replaceAll(" ", "");
                             if(checkTypeValidity(a) == 2){
                                 error = true;
+                                System.out.println("B");
                                 return "";
                             }
                         }
@@ -151,32 +184,36 @@ public static String parser(String ali) {
                     StringTokenizer b = new StringTokenizer(ayse, " ", false);
                         if(b.countTokens() != 1){
                             error = true;
+                            System.out.println("C");
                             return "";
                         }else{
                             String a = b.nextToken();
                             a = a.replaceAll(" ", "");
                             if(checkTypeValidity(a) == 2){
                                 error = true;
+                                System.out.println("D");
                                 return "";
                             }
                         }
                 }
             }
         } else if (ali.contains("*") || ali.contains("/")) {
-            ali.replaceAll("*", " * ");
-            ali.replaceAll("/", " / ");
+            ali = ali.replaceAll("\\*", " * ");
+            ali = ali.replaceAll("\\/", " / ");
             StringTokenizer aticine2 = new StringTokenizer(ali, "*/", false);
             while (aticine2.hasMoreTokens()) {
                 String a = aticine2.nextToken();
                 StringTokenizer b = new StringTokenizer(a, " ", false); // this and below if checks a + b  c + d also operators sequential without num between
                 if(b.countTokens() != 1){
                     error = true;
+                    System.out.println("E");
                     return "";
                 }else{
                     String c = b.nextToken();
                     c = c.replaceAll(" ", "");
                     if(checkTypeValidity(a) == 2){
                         error = true;
+                        System.out.println("F");
                         return "";
                     }
                 }
@@ -185,12 +222,14 @@ public static String parser(String ali) {
             StringTokenizer b = new StringTokenizer(ali, " ", false);
             if(b.countTokens() != 1){
                 error = true;
+                System.out.println("G");
                 return "";
             }else{
                 String a = b.nextToken();
                 a = a.replaceAll(" ", "");
                 if(checkTypeValidity(a) == 2){
                     error = true;
+                    System.out.println("H");
                     return "";
                 }
             }
@@ -199,36 +238,7 @@ public static String parser(String ali) {
     }
 
 
-    public static void expressionCheck(String s){
-        StringTokenizer tok = new StringTokenizer(s, "+/*-()", true);
-        String test = s;
-        test.replaceAll(" ", "");
-        if(test.length() == 0){ //if no expression exists, just spaces
-             error = true;
-             return;
-        }
-        removePhar(s);
-    }
 
-    public static void assignmentCheck(String s){
-        StringTokenizer t = new StringTokenizer(s, "=", false);
-        if(t.countTokens() != 2){
-            error = true;
-            System.out.println("A");
-            return;
-        }
-
-        String varName = t.nextToken();
-        if(checkTypeValidity(varName) != 1){
-            System.out.println(checkTypeValidity(varName));
-            System.out.println("B");
-            System.out.println(varName);
-            error = true;
-            return;
-        }
-
-        expressionCheck(t.nextToken());
-    }
 
 
     public static int typeChecker(String ece) {
@@ -308,15 +318,12 @@ public static String parser(String ali) {
     // returns 0 if int, 1 if variable name, 2 if erroneous name
     //should check if the first letter of varname is num!!
     public static int checkTypeValidity(String s) {
-        System.out.println("varname is \"" + s + "\"");
         StringTokenizer tok = new StringTokenizer(s, " ", false);
         if(tok.countTokens() != 1) return 2;
-        s.replaceAll(" ", "");
+        s = s.replaceAll(" ", "");
         boolean integer = true;
         for (int i = 0; i < s.length(); i++) {
             char ch = s.charAt(i);
-            //System.out.println();
-            System.out.println((int)ch);
             if ((int)ch <= 57 && (int)ch >= 48) continue;  //if integer
             else if (((int)ch <= 122 && (int)ch >= 97 ) || ((int)ch <= 132 && (int)ch >= 101)) integer = false;
             else return 2;
