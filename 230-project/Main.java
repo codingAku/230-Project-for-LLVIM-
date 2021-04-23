@@ -11,17 +11,11 @@ import java.lang.String;
 public class Main {
     static HashSet<String> declaredVariables = new HashSet<String>();
     public static int number = 1;
-    public static boolean flag = false; // we must reset flag to false at each expression line, beware
+    public static boolean flag = false;
     static ArrayList<String> outputs = new ArrayList<String>();
-    // static boolean error = false;
 
     public static void main(String[] args) throws FileNotFoundException {
-        // String ece = "x = b+(4*c+5)*7";
-        // String ece = "print(f1)";
-        // String ece = "a=b";
-        // String ece = "while(n)";
-        // outputs.add(ece);
-        // expression(ece);
+       
         File input = new File(args[0]);
         Scanner x = new Scanner(input);
 
@@ -31,52 +25,48 @@ public class Main {
         int lineNum = 0;
         boolean whif = false;
 
+        //reading
         while (x.hasNextLine() && !syn.error) {
-            
+
             String ece = x.nextLine();
             lineNum++;
-            // ece = ece.replaceAll(" ", "");
             ece = ece.replaceAll("\t", " ");
-
+            //comments
             if (ece.contains("#"))
                 ece = ece.substring(0, ece.indexOf("#"));
 
             int type = typeChecker(ece);
+             
+            //line types execution
             switch (type) {
             case 1: // expression
                 syn.assignmentCheck(ece);
                 ece = ece.replaceAll(" ", "");
                 if (!syn.error)
-                expression(ece);
+                    expression(ece);
                 else {
-                    
-                    writer.println("Syntax error at line " + lineNum);
-                    writer.close();
-                    
+                    break;
                 }
                 break;
-                case 2: // while/if entrance
-            
-                if(whif){
-                    syn.error = true;
+            case 2: // while/if entrance
 
-                    writer.println("syntax error on line " + lineNum);
-                    writer.close();
-                    return;
+                if (whif) {
+                    syn.error = true;
+                    break;
                 }
                 syn.conditionCheck(ece);
                 ece = ece.replaceAll(" ", "");
                 if (syn.error) {
-                    writer.println("syntax error on line " + lineNum);
-                    writer.close();
-                    return;
+                    break;
                 }
                 whif = true;
                 while_if = conditioner(ece);
                 break;
-                case 3: // while/if enclosure
+            case 3: // while/if enclosure
                 syn.closeCheck(ece);
-                if(syn.error){writer.println("syntax error on line " + lineNum); writer.close(); return;}
+                if (syn.error) {
+                    break;
+                }
                 if (while_if == 1) {
                     outputs.add("br label %whcond");
                     outputs.add("\n");
@@ -86,35 +76,41 @@ public class Main {
                 }
                 whif = false;
                 break;
-                case 4: // print
+            case 4: // print
                 syn.printCheck(ece);
                 ece = ece.replaceAll(" ", "");
                 if (syn.error) {
-                    writer.println("syntax error on line " + lineNum);
-                    writer.close();
-                    return;
+                    break;
                 }
                 print(ece);
 
                 break;
 
-            case 0:
+            case 0: //not related lines
                 ece = ece.replaceAll(" ", "");
                 if (ece.length() == 0) {
                     continue;
                 }
-                writer.println("syntax error on line " + lineNum);
-                writer.close();
                 syn.error = true;
                 break;
             }
         }
-    
-        if (whif){
-            writer.println("Syntax error on line " + (lineNum+1));
+
+
+        //checking syntax errors
+        if (syn.error) {
+            writer.println("Syntax error on line " + (lineNum));
             writer.close();
             return;
         }
+        if (whif) {
+            writer.println("Syntax error on line " + (lineNum + 1));
+            writer.close();
+            return;
+        }
+
+
+        //writing 
         writer.println("; ModuleID = \'mylang2ir\' \n" + "declare i32 @printf(i8*, ...)\n"
                 + "@print.str = constant [4 x i8] c\"%d\\0A\\00\" \n\n" + "define i32 @main() {");
         outputs.add("\n }");

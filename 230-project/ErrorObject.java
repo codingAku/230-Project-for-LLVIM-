@@ -47,36 +47,35 @@ public class ErrorObject {
             return;
         } else {
             String exp = s.substring((s.indexOf("(") + 1), s.lastIndexOf(")"));
-            expressionCheck(exp);       
+            expressionCheck(exp);
             if (error)
                 return;
             s = s.replaceAll(" ", "");
-            if(s.substring(s.lastIndexOf(")")+1).length() != 1){
+            if (s.substring(s.lastIndexOf(")") + 1).length() != 1) {
                 error = true;
                 return;
             }
         }
-        
 
     }
-    public void closeCheck(String ece){
+
+    public void closeCheck(String ece) {
         ece = ece.replaceAll(" ", "");
-        if(ece.length() != 1){
+        if (ece.length() != 1) {
             error = true;
             return;
         }
     }
 
-    public void printCheck(String s){
+    public void printCheck(String s) {
         s = s.replaceAll("\\(", " ( ");
         s = s.replaceAll("\\)", " ) ");
         StringTokenizer tok1 = new StringTokenizer(s, " ", false);
         String cond = tok1.nextToken();
-        if (!(cond.equals("print")) ){
+        if (!(cond.equals("print"))) {
             error = true;
             return;
-        } 
-        else if (tok1.hasMoreTokens() && !(tok1.nextToken().equals("("))) {
+        } else if (tok1.hasMoreTokens() && !(tok1.nextToken().equals("("))) {
             error = true;
             return;
         } else if (s.indexOf(")") == -1) {
@@ -84,11 +83,11 @@ public class ErrorObject {
             return;
         } else {
             String exp = s.substring((s.indexOf("(") + 1), s.lastIndexOf(")"));
-            expressionCheck(exp);       
+            expressionCheck(exp);
             if (error)
                 return;
             s = s.replaceAll(" ", "");
-            if(s.substring(s.lastIndexOf(")")+1).length() != 0){
+            if (s.substring(s.lastIndexOf(")") + 1).length() != 0) {
                 error = true;
                 return;
             }
