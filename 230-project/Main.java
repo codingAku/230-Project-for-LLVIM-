@@ -65,7 +65,7 @@ public class Main {
                 if (while_if == 1) {
                     exe.outputs.add("br label %whcond");
                     exe.outputs.add("\n");
-                    exe.outputs.add("whend:" + "\n" + "\nret i32 0");
+                    exe.outputs.add("whend:" + "\n");
                 } else if (while_if == 2) {
                     exe.outputs.add("br label %ifend");
                 }
@@ -108,6 +108,7 @@ public class Main {
         //writing 
         writer.println("; ModuleID = \'mylang2ir\' \n" + "declare i32 @printf(i8*, ...)\n"
                 + "@print.str = constant [4 x i8] c\"%d\\0A\\00\" \n\n" + "define i32 @main() {");
+        exe.outputs.add("\nret i32 0");
         exe.outputs.add("\n }");
 
         for (String s : exe.declaredVariables) {
