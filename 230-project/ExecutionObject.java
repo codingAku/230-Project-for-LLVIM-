@@ -35,8 +35,8 @@ public class ExecutionObject{
             String varName = dec.nextToken();
             String value = dec.nextToken();
             String temporary = "";
-            value = removeParan(value);
-            temporary = aticine(value);
+            temporary = removeParan(value);
+           // temporary = aticine(value);
             if(temporary.contains("%")){
                 outputs.add("store i32 " + temporary + ", i32* %" + varName); 
             }
