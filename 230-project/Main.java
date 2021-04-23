@@ -13,7 +13,7 @@ public class Main {
     public static int number = 1;
     public static boolean flag = false; // we must reset flag to false at each expression line, beware
     static ArrayList<String> outputs = new ArrayList<String>();
-    static boolean error = false;
+    // static boolean error = false;
 
     public static void main(String[] args) throws FileNotFoundException {
         // String ece = "x = b+(4*c+5)*7";
@@ -24,222 +24,114 @@ public class Main {
         // expression(ece);
         File input = new File(args[0]);
         Scanner x = new Scanner(input);
-        
-        PrintWriter writer = new PrintWriter(new File(args[1]));
-        int while_if = 0;
-        int lineNum = 1;
 
-        while (x.hasNextLine() && !error) {
+        PrintWriter writer = new PrintWriter(new File(args[1]));
+        ErrorObject syn = new ErrorObject();
+        int while_if = 0;
+        int lineNum = 0;
+        boolean whif = false;
+
+        while (x.hasNextLine() && !syn.error) {
+            
             String ece = x.nextLine();
-            //ece = ece.replaceAll(" ", "");
+            lineNum++;
+            // ece = ece.replaceAll(" ", "");
             ece = ece.replaceAll("\t", " ");
 
-            if(ece.contains("#")) ece = ece.substring(0, ece.indexOf("#"));
+            if (ece.contains("#"))
+                ece = ece.substring(0, ece.indexOf("#"));
 
             int type = typeChecker(ece);
             switch (type) {
             case 1: // expression
-                assignmentCheck(ece);
-                if(!error) expression(ece);
-                else{
+                syn.assignmentCheck(ece);
+                ece = ece.replaceAll(" ", "");
+                if (!syn.error)
+                expression(ece);
+                else {
+                    
                     writer.println("Syntax error at line " + lineNum);
                     writer.close();
+                    
                 }
                 break;
-            case 2: //while/if entrance
-                //conditionCheck(ece);
+                case 2: // while/if entrance
+            
+                if(whif){
+                    syn.error = true;
+
+                    writer.println("syntax error on line " + lineNum);
+                    writer.close();
+                    return;
+                }
+                syn.conditionCheck(ece);
+                ece = ece.replaceAll(" ", "");
+                if (syn.error) {
+                    writer.println("syntax error on line " + lineNum);
+                    writer.close();
+                    return;
+                }
+                whif = true;
                 while_if = conditioner(ece);
                 break;
-            case 3: //while/if enclosure
-                if(while_if == 1){
+                case 3: // while/if enclosure
+                syn.closeCheck(ece);
+                if(syn.error){writer.println("syntax error on line " + lineNum); writer.close(); return;}
+                if (while_if == 1) {
                     outputs.add("br label %whcond");
                     outputs.add("\n");
                     outputs.add("whend:" + "\n" + "\nret i32 0");
-                }else if(while_if == 2){
+                } else if (while_if == 2) {
                     outputs.add("br label %ifend");
                 }
+                whif = false;
                 break;
-            case 4: //print
-            print(ece);
-            break;
-            default: // handles gibberish lines AND empty lines
-            ece = ece.replaceAll(" ", "");
-            if(ece.length() != 0) error = true;
-            break;
+                case 4: // print
+                syn.printCheck(ece);
+                ece = ece.replaceAll(" ", "");
+                if (syn.error) {
+                    writer.println("syntax error on line " + lineNum);
+                    writer.close();
+                    return;
+                }
+                print(ece);
+
+                break;
+
+            case 0:
+                ece = ece.replaceAll(" ", "");
+                if (ece.length() == 0) {
+                    continue;
+                }
+                writer.println("syntax error on line " + lineNum);
+                writer.close();
+                syn.error = true;
+                break;
+            }
         }
-        lineNum++;
+    
+        if (whif){
+            writer.println("Syntax error on line " + (lineNum+1));
+            writer.close();
+            return;
         }
-        
-        if(error) return;
-        writer.println("; ModuleID = \'mylang2ir\' \n"+"declare i32 @printf(i8*, ...)\n"+"@print.str = constant [4 x i8] c\"%d\\0A\\00\" \n\n"+"define i32 @main() {");
+        writer.println("; ModuleID = \'mylang2ir\' \n" + "declare i32 @printf(i8*, ...)\n"
+                + "@print.str = constant [4 x i8] c\"%d\\0A\\00\" \n\n" + "define i32 @main() {");
         outputs.add("\n }");
 
-        for(String s: declaredVariables){ writer.println("%" + s + " = alloca i32");}
+        for (String s : declaredVariables) {
+            writer.println("%" + s + " = alloca i32");
+        }
         writer.println();
-        for(String s: declaredVariables) {writer.println("store i32 0, i32* %" + s);}
+        for (String s : declaredVariables) {
+            writer.println("store i32 0, i32* %" + s);
+        }
         writer.println();
-        
-        for(String s: outputs) writer.println(s);
+
+        for (String s : outputs)
+            writer.println(s);
         writer.close();
     }
-    
-
-    public static void assignmentCheck(String s){
-        System.out.println("BURDA DA MI "+ error);
-        StringTokenizer t = new StringTokenizer(s, "=", false);
-        if(t.countTokens() != 2){
-            error = true;
-            return;
-        }
-
-        String varName = t.nextToken();
-        if(checkTypeValidity(varName) != 1){
-            error = true;
-            System.out.println("HERE");
-            return;
-        }
-
-        expressionCheck(t.nextToken());
-        if(error) System.out.println("ERROR");
-    }
-
-
-    public static void expressionCheck(String s){
-        StringTokenizer tok = new StringTokenizer(s, "+/*-()", true);
-        String test = s;
-        test = test.replaceAll(" ", "");
-        if(test.length() == 0){ //if no expression exists, just spaces
-             error = true;
-             return;
-        }
-        removePhar(s);
-    }
-    
-    public static void conditionCheck(String s){
-        s = s.replaceAll("(", " ( ");
-        s = s.replaceAll(")", " ) ");
-        s = s.replaceAll("{", " { ");
-        //StringTokenizer tok = new StringTokenizer(s, " ", false);
-        if(!s.substring(0, s.indexOf(" ")).equals("while") || !s.substring(0, s.indexOf(" ")).equals("if")){
-            error = true;
-            return;
-        }
-    }
-
-    /*
-    public static void chooseFunct(String s){
-        System.out.println("define i32 @choose(" + )
-    }
-    */
-
-
-
-    private static void removePhar(String ece){
-        while (ece.contains("(")) {
-            int fi = ece.indexOf("(");
-            int fis = ece.indexOf(")");
-            if(fis == -1){
-                error = true;
-                return;
-            }
-            String ali = ece.substring(fi + 1, fis);
-            // this part is just testing
-            ali = parser(ali);
-            ece = ece.substring(0, fi) + ali + ece.substring(fis + 1);
-        }
-        if(ece.contains(")")) error = true;
-        ece = parser(ece);
-    }
-
-public static String parser(String ali) {
-        // first tokning to + -
-        if (ali.contains("+") || ali.contains("-")) {
-            ali = ali.replaceAll("\\+", " + ");
-            ali = ali.replaceAll("\\-", " - ");
-            StringTokenizer aticine = new StringTokenizer(ali, "+-", false);
-            while (aticine.hasMoreTokens()) {
-                String ayse = aticine.nextToken();
-                if (ayse.contains("*") || ayse.contains("/")) {
-                    ali = ali.replaceAll("\\*", " * ");
-                    ali = ali.replaceAll("\\/", " / ");
-        
-                    StringTokenizer aticine2 = new StringTokenizer(ayse, "*/", false);
-                    while (aticine2.hasMoreTokens()) {
-                        String a = aticine2.nextToken();
-                        StringTokenizer b = new StringTokenizer(a, " ", false); // this and below if checks a + b  c + d also operators sequential without num between
-                        if(b.countTokens() != 1){
-                            error = true;
-                            System.out.println("A");
-                            return "";
-                        }else{
-                            a = a.replaceAll(" ", "");
-                            if(checkTypeValidity(a) == 2){
-                                error = true;
-                                System.out.println("B");
-                                return "";
-                            }
-                        }
-                    }
-                } else {
-                    StringTokenizer b = new StringTokenizer(ayse, " ", false);
-                        if(b.countTokens() != 1){
-                            error = true;
-                            System.out.println("C");
-                            return "";
-                        }else{
-                            String a = b.nextToken();
-                            a = a.replaceAll(" ", "");
-                            if(checkTypeValidity(a) == 2){
-                                error = true;
-                                System.out.println("D");
-                                return "";
-                            }
-                        }
-                }
-            }
-        } else if (ali.contains("*") || ali.contains("/")) {
-            ali = ali.replaceAll("\\*", " * ");
-            ali = ali.replaceAll("\\/", " / ");
-            StringTokenizer aticine2 = new StringTokenizer(ali, "*/", false);
-            while (aticine2.hasMoreTokens()) {
-                String a = aticine2.nextToken();
-                StringTokenizer b = new StringTokenizer(a, " ", false); // this and below if checks a + b  c + d also operators sequential without num between
-                if(b.countTokens() != 1){
-                    error = true;
-                    System.out.println("E");
-                    return "";
-                }else{
-                    String c = b.nextToken();
-                    c = c.replaceAll(" ", "");
-                    if(checkTypeValidity(a) == 2){
-                        error = true;
-                        System.out.println("F");
-                        return "";
-                    }
-                }
-            }
-        } else { // for not expreessions like "n" in while in example
-            StringTokenizer b = new StringTokenizer(ali, " ", false);
-            if(b.countTokens() != 1){
-                error = true;
-                System.out.println("G");
-                return "";
-            }else{
-                String a = b.nextToken();
-                a = a.replaceAll(" ", "");
-                if(checkTypeValidity(a) == 2){
-                    error = true;
-                    System.out.println("H");
-                    return "";
-                }
-            }
-        }
-        return "1";
-    }
-
-
-
-
 
     public static int typeChecker(String ece) {
         if (ece.contains("=")) {
@@ -248,9 +140,9 @@ public static String parser(String ali) {
             return 2;
         } else if (ece.contains("}")) {
             return 3;
-        } else if(ece.contains("print")) {
+        } else if (ece.contains("print")) {
             return 4;
-        }else{
+        } else {
             return 0;
         }
     }
@@ -265,8 +157,8 @@ public static String parser(String ali) {
             value = removeParan(value);
             boolean x = false;
             temporary = aticine(value, x);
-            if (temporary.charAt(0)!='~') {
-                outputs.add("store i32 %t" + (number-1) + ", i32* %" + varName);//burda bi bokluk var
+            if (temporary.charAt(0) != '~') {
+                outputs.add("store i32 %t" + (number - 1) + ", i32* %" + varName);// burda bi bokluk var
             } else {
                 outputs.add("store i32 " + value + ", i32* %" + varName);
             }
@@ -279,8 +171,8 @@ public static String parser(String ali) {
         cond.nextToken();
         String printStatement = cond.nextToken();
         printStatement = aticine(printStatement, true);
-        outputs.add("call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 "
-                + "%t" + (number - 1) + " )");
+        outputs.add("call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " + "%t"
+                + (number - 1) + " )");
     }
 
     public static int conditioner(String ece) {
@@ -316,20 +208,26 @@ public static String parser(String ali) {
     }
 
     // returns 0 if int, 1 if variable name, 2 if erroneous name
-    //should check if the first letter of varname is num!!
+    // should check if the first letter of varname is num!!
     public static int checkTypeValidity(String s) {
         StringTokenizer tok = new StringTokenizer(s, " ", false);
-        if(tok.countTokens() != 1) return 2;
+        if (tok.countTokens() != 1)
+            return 2;
         s = s.replaceAll(" ", "");
         boolean integer = true;
         for (int i = 0; i < s.length(); i++) {
             char ch = s.charAt(i);
-            if ((int)ch <= 57 && (int)ch >= 48) continue;  //if integer
-            else if (((int)ch <= 122 && (int)ch >= 97 ) || ((int)ch <= 132 && (int)ch >= 101)) integer = false;
-            else return 2;
+            if ((int) ch <= 57 && (int) ch >= 48)
+                continue; // if integer
+            else if (((int) ch <= 122 && (int) ch >= 97) || ((int) ch <= 132 && (int) ch >= 101))
+                integer = false;
+            else
+                return 2;
         }
-        if (integer) return 0;
-        else return 1;
+        if (integer)
+            return 0;
+        else
+            return 1;
     }
 
     // here I handle parantheses
@@ -458,7 +356,7 @@ public static String parser(String ali) {
                 if (ali.charAt(0) != '%') { // here means the variable is neither an intger nor a %t variable
                     outputs.add("%t" + number++ + " = load i32* %" + ali);
                     declaredVariables.add(ali);
-                   // x = true;
+                    // x = true;
                     return ali;
                     // islem.set(i, "%t"+number++);
                 }
