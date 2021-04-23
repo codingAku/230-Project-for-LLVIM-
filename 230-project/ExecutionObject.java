@@ -1,5 +1,9 @@
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Stack;
 import java.util.StringTokenizer;
 
 public class ExecutionObject{
@@ -32,9 +36,11 @@ public class ExecutionObject{
             String value = dec.nextToken();
             String temporary = "";
             value = removeParan(value);
-            boolean x = false;
-            temporary = aticine(value, x);
-            if (temporary.charAt(0) != '~') {
+            temporary = aticine(value);
+            if(temporary.contains("%")){
+                outputs.add("store i32 " + temporary + ", i32* %" + varName); 
+            }
+            else if (temporary.charAt(0) != '~') {
                 outputs.add("store i32 %t" + (number - 1) + ", i32* %" + varName);// burda bi bokluk var
             } else {
                 outputs.add("store i32 " + value + ", i32* %" + varName);
@@ -47,7 +53,7 @@ public class ExecutionObject{
         StringTokenizer cond = new StringTokenizer(ece, "()", false);
         cond.nextToken();
         String printStatement = cond.nextToken();
-        printStatement = aticine(printStatement, true);
+        printStatement = aticine(printStatement);
         outputs.add("call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " + "%t"
                 + (number - 1) + " )");
     }
@@ -60,7 +66,7 @@ public class ExecutionObject{
             // StringTokenizer paran = new StringTokenizer(cond.nextToken(), "()", false);
             outputs.add("whcond:");
             String test = cond.nextToken();
-            aticine(test, true);
+            aticine(test);
             outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
             outputs.add("br i1 %t" + (number - 1) + ", label %whbody, label %whend");
             outputs.add("\n");
@@ -71,7 +77,7 @@ public class ExecutionObject{
         } else if (cond.nextToken().equals("if")) {
             outputs.add("ifcond:");
             String test = cond.nextToken();
-            aticine(test, true);
+            aticine(test);
             // is this always true or false? where do we set it false or true?
             outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
             outputs.add("br i1 %t" + number++ + ", label %ifbody");
@@ -109,16 +115,20 @@ public class ExecutionObject{
 
     // here I handle parantheses
     public  String removeParan(String ece) {
-        while (ece.contains("(")) {
-            int fi = ece.indexOf("(", 0);
-            int fis = ece.indexOf(")", 0);
-            String ali = ece.substring(fi + 1, fis);
-            // this part is just testing
-            ali = aticine(ali, true);
-            ece = ece.substring(0, fi) + ali + ece.substring(fis + 1);
+        if(!ece.contains("(")){
+            return aticine(ece);
+        }
+
+        while(ece.contains("(")){
+            System.out.println(ece);
+            int a = ece.lastIndexOf("(");
+            int b = ece.indexOf(")", ece.lastIndexOf("("));
+            ece = ece.substring(0,a) + removeParan(ece.substring(a+1,b)) + ( b == ece.length()-1 ? "" : ece.substring(b+1, ece.length()));
+            System.out.println(ece);
         }
         return ece;
     }
+
 
     // this method takes an array and does the calculations inside it
     public  void calculation(ArrayList<String> islem) {
@@ -188,7 +198,7 @@ public class ExecutionObject{
     // this method handles calculations while replacing the results with
     // calculations like 4*3 is replaced with 12
     // works fine if there is no pharanthesis in the expression
-    public  String aticine(String ali, boolean x) {
+    public  String aticine(String ali) {
         ArrayList<String> son = new ArrayList<String>();
 
         // first tokning to + -
@@ -232,6 +242,8 @@ public class ExecutionObject{
                     // x = true;
                     return ali;
                     // islem.set(i, "%t"+number++);
+                }else{
+                    return ali;
                 }
             }
         }

@@ -20,6 +20,8 @@ public class Main {
         int lineNum = 0;
         boolean whif = false;
 
+       // exe.expression("a=(3+(3*4))");
+
         //reading
         while (x.hasNextLine() && !syn.error) {
 
