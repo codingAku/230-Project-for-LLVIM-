@@ -196,8 +196,18 @@ public class ExecutionObject{
             // StringTokenizer paran = new StringTokenizer(cond.nextToken(), "()", false);
             outputs.add("whcond:");
             String test = cond.nextToken();
-            aticine(test);
-            outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
+            int a = ece.indexOf("(");
+            int b = ece.lastIndexOf(")")+1;
+            String temporary = removeParan(ece.substring(a, b));
+            // temporary = aticine(value);
+            if(temporary.contains("%"))
+                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
+            else if (temporary.charAt(0) != '~') {
+                outputs.add("%t" + number++ + " = load i32* %" + temporary);
+                outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-1) + ", 0");
+            } else 
+                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary.substring(1) + ", 0");
+
             outputs.add("br i1 %t" + (number - 1) + ", label %whbody, label %whend");
             outputs.add("\n");
             outputs.add("whbody:");
@@ -207,7 +217,18 @@ public class ExecutionObject{
         } else if (cond.nextToken().equals("if")) {
             outputs.add("ifcond:");
             String test = cond.nextToken();
-            aticine(test);
+            int a = ece.indexOf("(");
+            int b = ece.lastIndexOf(")")+1;
+            String temporary = removeParan(ece.substring(a, b));
+            // temporary = aticine(value);
+            if(temporary.contains("%"))
+                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
+            else if (temporary.charAt(0) != '~') {
+                outputs.add("%t" + number++ + " = load i32* %" + temporary);
+                outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-1) + ", 0");
+            }else 
+                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary.substring(1) + ", 0");
+
             // is this always true or false? where do we set it false or true?
             outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
             outputs.add("br i1 %t" + number++ + ", label %ifbody");
