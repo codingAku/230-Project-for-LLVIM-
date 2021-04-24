@@ -11,8 +11,8 @@ public class ExecutionObject{
     public  HashSet<String> declaredVariables = new HashSet<String>();
     public  int number = 0;
     public  ArrayList<String> outputs = new ArrayList<String>();
-    public boolean choose = true;
     public int chooseNum = 1;
+    public int depth = 0;
 
   
 
@@ -29,40 +29,52 @@ public class ExecutionObject{
             return 0;
         }
     }
-
+    
     public String choose(String ece){
+        
         //true ise br yap çık
-        String retval = "";
-        boolean[] ne = new boolean[1];
+        boolean dummy = false;
         declaredVariables.add("cho"+chooseNum);
         outputs.add("br label %choose"+chooseNum);
         outputs.add("choose" + chooseNum+":");
         String[] variables = new String[4];
-        String exp = ece.substring(ece.indexOf("(")+1, ece.lastIndexOf(")")); //choose un ici
+        int ab = ece.indexOf("(");
+        int bc = findChoose(ece);
+        String exp = ece.substring(ab+1, bc); //choose un ici
         StringTokenizer a = new StringTokenizer(exp, ",",false);
         int i=0;
         while(a.hasMoreTokens()){
             String tempE = a.nextToken();
             if(tempE.contains("choose")){
-
-                int ab = exp.indexOf("(");
-                int bc = findChoose(exp);
-                String s = exp.substring(ab , bc+1);
+                dummy = true;
+                depth++;
+                // chooseNum++;
+                 int ef = exp.indexOf("(");
+                int cd = findChoose(exp);
+                String s = exp.substring(ef , cd+1);
                 System.out.println(tempE);
-                expression("choose"+ s);
-                exp = exp.substring(0, exp.indexOf("choose"))+ "cho" + (chooseNum) + exp.substring(bc+1);
-                ece = ece.substring(0, ece.indexOf("choose"))+ "cho" +(chooseNum) + ece.substring(findChoose(ece)+1);
+                s = "choose" +s;
+                chooseNum++;
+                exp = choose(exp);
+                // exp = exp.substring(0, exp.indexOf("choose"))+ "cho" + (chooseNum) + exp.substring(bc+1);
+                // exp = exp.substring(0, (ab-6))+ "cho" +(chooseNum-1) + exp.substring(bc+1);
+                chooseNum -= 2;
                 a = new StringTokenizer(exp, ",", false);
-                variables[i] = "cho" + (chooseNum);
-                System.out.println(ece);
+                i=0;
+                //variables[i] = "cho" + (chooseNum-1);
+                //System.out.println(ece);
             }else{
                 tempE= tempE.replaceAll(" ", "");
-                variables[i]=removeParan(tempE, "", ne);
+                if(variables[i]!=(null)){
+                    i++;
+                    continue;
+                }
+                variables[i]=removeParan(tempE);
                 if(variables[i].contains("~")){
                     variables[i] =variables[i].substring(1);
-
+                    
                 }else if(!variables[i].contains("%")){
-                    System.out.println("%t" + number++ +" = load i32* %" + variables[i]);
+                   // outputs.add("%t" + number++ +" = load i32* %" + variables[i]);
                     variables[i] ="%t" + (number-1);
                 }
                 i++;
@@ -77,20 +89,39 @@ public class ExecutionObject{
         outputs.add("br label %end"+chooseNum);
         outputs.add("equalCheck"+chooseNum+":");
         outputs.add("%t" + number++ + " = icmp eq i32 " +variables[0]+ ", 0");
-        outputs.add("store i32 " +  variables[1] + ", i32* %cho" + chooseNum);
         outputs.add("br i1 %t" + (number-1) + ", label %equalEnd"+chooseNum+", label %negativeEnd" + chooseNum);
         outputs.add("equalEnd"+chooseNum+":");
+        outputs.add("store i32 " +  variables[1] + ", i32* %cho" + chooseNum);
         outputs.add("br label %end"+chooseNum);
         outputs.add("negativeEnd"+chooseNum+":");
         outputs.add("store i32 " +  variables[3] + ", i32* %cho" + chooseNum);
         outputs.add("br label %end"+chooseNum);
         outputs.add("end"+chooseNum+":");
-        chooseNum++;
-
-        //choose = false;
-        System.out.println(ece);
-        return ece;
         
+        if(dummy){
+            //chooseNum += 2;
+            dummy = false;
+            int temp = ece.length();
+            if(bc == temp-1){
+            ece = ece.substring(0, (ab-6))+ "cho" +(chooseNum) + ece.substring(bc);
+            ece = ece.substring(0, ece.length()-1);
+            }else{
+            ece = ece.substring(0, (ab-6))+ "cho" +(chooseNum) + ece.substring(bc+1);
+            }
+            
+        }else{
+       // chooseNum++;
+        int temp = ece.length();
+        if(bc == temp-1){
+        ece = ece.substring(0, (ab-6))+ "cho" +(chooseNum) + ece.substring(bc);
+        ece = ece.substring(0, ece.length()-1);
+        }else{
+        ece = ece.substring(0, (ab-6))+ "cho" +(chooseNum) + ece.substring(bc+1);
+        //choose = false;
+        }
+    }
+        chooseNum++;
+        return ece;
         
         
 
@@ -119,32 +150,31 @@ public class ExecutionObject{
 
     public  void expression(String ece) {
 
-        boolean[] t = new boolean[1];
-        t[0] = true;
+        String temporary = "";
+        
         if (ece.contains("=")) {
             StringTokenizer dec = new StringTokenizer(ece, "=", false);
             String varName = dec.nextToken();
             String value = dec.nextToken(); 
-            String temporary = "";
+            if(value.contains("choose")){
             value = choose(value);
-            temporary = removeParan(value, varName, t);
+            chooseNum += depth;
+            depth = 0;
+            }
+            temporary = removeParan(value);
            // temporary = aticine(value);
-            if(temporary.contains("%") && t[0]){
+            if(temporary.contains("%")){
                 outputs.add("store i32 " + temporary + ", i32* %" + varName); 
             }
-            else if (temporary.charAt(0) != '~' && t[0]) {
+            else if (temporary.charAt(0) != '~') {
                 outputs.add("store i32 %t" + (number - 1) + ", i32* %" + varName);// burda bi bokluk var
-            } else if(t[0]) {
+            } else  {
                 outputs.add("store i32 " + value + ", i32* %" + varName);
             }
             declaredVariables.add(varName);
             //if(!t[0]){
            // outputs.add("end:");
             //}
-        }else{
-            ece = choose(ece);
-            temporary = removeParan(ece);
-               
         }
     }
 
@@ -235,7 +265,7 @@ public class ExecutionObject{
 
     */
     // here I handle parantheses
-    public  String removeParan(String ece, String name, boolean[] check) {
+    public  String removeParan(String ece) {
         if(!ece.contains("(")){
             return aticine(ece);
         }
@@ -245,7 +275,7 @@ public class ExecutionObject{
             int a = ece.lastIndexOf("(");
             int b = ece.indexOf(")", ece.lastIndexOf("("));
             String tmp = ece.substring(a+1, b);
-            tmp = removeParan(tmp, "", check);
+            tmp = removeParan(tmp);
             ece = ece.substring(0,a) + tmp + ( b == ece.length()-1 ? "" : ece.substring(b+1, ece.length()));
             //System.out.println(ece);
         }
