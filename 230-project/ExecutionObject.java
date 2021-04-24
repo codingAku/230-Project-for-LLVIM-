@@ -30,32 +30,42 @@ public class ExecutionObject{
         }
     }
 
-    public boolean choose(String ece, String name){
+    public String choose(String ece){
         //true ise br yap çık
-        boolean flag = true;
+        String retval = "";
         boolean[] ne = new boolean[1];
+        declaredVariables.add("cho"+chooseNum);
         outputs.add("br label %choose"+chooseNum);
         outputs.add("choose" + chooseNum+":");
         String[] variables = new String[4];
-        String exp = ece.substring(ece.indexOf("(")+1, ece.lastIndexOf(")"));
+        String exp = ece.substring(ece.indexOf("(")+1, ece.lastIndexOf(")")); //choose un ici
         StringTokenizer a = new StringTokenizer(exp, ",",false);
         int i=0;
         while(a.hasMoreTokens()){
             String tempE = a.nextToken();
             if(tempE.contains("choose")){
-              
+
+                int ab = exp.indexOf("(");
+                int bc = findChoose(exp);
+                String s = exp.substring(ab , bc+1);
+                System.out.println(tempE);
+                expression("choose"+ s);
+                exp = exp.substring(0, exp.indexOf("choose"))+ "cho" + (chooseNum) + exp.substring(bc+1);
+                ece = ece.substring(0, ece.indexOf("choose"))+ "cho" +(chooseNum) + ece.substring(findChoose(ece)+1);
+                a = new StringTokenizer(exp, ",", false);
+                variables[i] = "cho" + (chooseNum);
+                System.out.println(ece);
             }else{
                 tempE= tempE.replaceAll(" ", "");
                 variables[i]=removeParan(tempE, "", ne);
                 if(variables[i].contains("~")){
                     variables[i] =variables[i].substring(1);
 
-
                 }else if(!variables[i].contains("%")){
+                    System.out.println("%t" + number++ +" = load i32* %" + variables[i]);
                     variables[i] ="%t" + (number-1);
                 }
                 i++;
-
             }
         }
         //outputs.add("\ndefine i32 @choose"+"(i32 "+variables[0]+", i32 "+variables[1] +", i32 "+variables[3] + ", i32 "+variables[4] + ") {");
@@ -63,21 +73,23 @@ public class ExecutionObject{
         outputs.add("%t" + number++ + " = icmp sgt i32 "+ variables[0] + ", 0");
         outputs.add("br i1 %t" + (number-1) + ", label %greaterEnd"+chooseNum+", label %equalCheck" + chooseNum);
         outputs.add("greaterEnd"+chooseNum+":");
-        outputs.add("store i32 " +  variables[2] + ", i32* %" + name);
+        outputs.add("store i32 " +  variables[2] + ", i32* %cho" + chooseNum);
         outputs.add("br label %end"+chooseNum);
         outputs.add("equalCheck"+chooseNum+":");
         outputs.add("%t" + number++ + " = icmp eq i32 " +variables[0]+ ", 0");
+        outputs.add("store i32 " +  variables[1] + ", i32* %cho" + chooseNum);
         outputs.add("br i1 %t" + (number-1) + ", label %equalEnd"+chooseNum+", label %negativeEnd" + chooseNum);
         outputs.add("equalEnd"+chooseNum+":");
-        outputs.add("store i32 " +  variables[1] + ", i32* %" + name);
         outputs.add("br label %end"+chooseNum);
         outputs.add("negativeEnd"+chooseNum+":");
-        outputs.add("store i32 " +  variables[3] + ", i32* %" + name);
+        outputs.add("store i32 " +  variables[3] + ", i32* %cho" + chooseNum);
         outputs.add("br label %end"+chooseNum);
         outputs.add("end"+chooseNum+":");
         chooseNum++;
-        choose = false;
-        return false;
+
+        //choose = false;
+        System.out.println(ece);
+        return ece;
         
         
         
@@ -109,12 +121,12 @@ public class ExecutionObject{
 
         boolean[] t = new boolean[1];
         t[0] = true;
-
         if (ece.contains("=")) {
             StringTokenizer dec = new StringTokenizer(ece, "=", false);
             String varName = dec.nextToken();
             String value = dec.nextToken(); 
             String temporary = "";
+            value = choose(value);
             temporary = removeParan(value, varName, t);
            // temporary = aticine(value);
             if(temporary.contains("%") && t[0]){
@@ -129,6 +141,10 @@ public class ExecutionObject{
             //if(!t[0]){
            // outputs.add("end:");
             //}
+        }else{
+            ece = choose(ece);
+            temporary = removeParan(ece);
+               
         }
     }
 
@@ -196,27 +212,42 @@ public class ExecutionObject{
         else
             return 1;
     }
+/*
+    public String exterminateChoose(String ece){
+        if(ece.contains("choose")){
+            expression
+        }
+        while(ece.contains("choose")){
+            System.out.println(ece);
+            int index = findChoose(ece);
+            //System.out.println(ece.substring(ece.indexOf("choose"), index+1));
+            //ece = exterminateChoose(ece.substring(ece.indexOf("choose"), index+1));
+            //System.out.println(ece);
+            String temp = ece.substring(ece.indexOf("choose"), index+1);
+            ece = ece.substring(0,ece.indexOf("choose")) + "%t" + (number-1)+ ece.substring(index+1);
+            //System.out.println(ece);
+            outputs.add("\n%t" + number++ + " = load i32* %cho"+ (chooseNum-1));
+            System.out.println(ece);
+        }
 
+        return ece;
+    }
+
+    */
     // here I handle parantheses
     public  String removeParan(String ece, String name, boolean[] check) {
-        if(ece.contains("choose")){
-            int index = findChoose(ece);
-            String temp = ece.substring(ece.indexOf("choose"), index+1);
-            check[0] = choose(temp, name);
-            ece = ece.substring(0,ece.indexOf("choose")) + "%t"+(number-1) + ece.substring(index+1);
-        }
         if(!ece.contains("(")){
             return aticine(ece);
         }
 
         while(ece.contains("(")){
-            System.out.println(ece);
+            //System.out.println(ece);
             int a = ece.lastIndexOf("(");
             int b = ece.indexOf(")", ece.lastIndexOf("("));
             String tmp = ece.substring(a+1, b);
             tmp = removeParan(tmp, "", check);
             ece = ece.substring(0,a) + tmp + ( b == ece.length()-1 ? "" : ece.substring(b+1, ece.length()));
-            System.out.println(ece);
+            //System.out.println(ece);
         }
         return aticine(ece);
     }
