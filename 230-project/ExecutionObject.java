@@ -196,18 +196,19 @@ public class ExecutionObject{
             // StringTokenizer paran = new StringTokenizer(cond.nextToken(), "()", false);
             outputs.add("whcond:");
             String test = cond.nextToken();
-            int a = ece.indexOf("(");
-            int b = ece.lastIndexOf(")")+1;
+            int a = ece.indexOf("(")+1;
+            int b = ece.lastIndexOf(")");
             String temporary = removeParan(ece.substring(a, b));
             // temporary = aticine(value);
             if(temporary.contains("%"))
-                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
+                outputs
+                .add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
             else if (temporary.charAt(0) != '~') {
                 outputs.add("%t" + number++ + " = load i32* %" + temporary);
                 outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-1) + ", 0");
-            } else 
+            } else  {
                 outputs.add("%t" + number++ + " = icmp ne i32 " + temporary.substring(1) + ", 0");
-
+            }
             outputs.add("br i1 %t" + (number - 1) + ", label %whbody, label %whend");
             outputs.add("\n");
             outputs.add("whbody:");
@@ -296,7 +297,9 @@ public class ExecutionObject{
             int a = ece.lastIndexOf("(");
             int b = ece.indexOf(")", ece.lastIndexOf("("));
             String tmp = ece.substring(a+1, b);
+            System.out.println(tmp);
             tmp = removeParan(tmp);
+            tmp = tmp.charAt(0) == '~' ? tmp.substring(1) : tmp;
             ece = ece.substring(0,a) + tmp + ( b == ece.length()-1 ? "" : ece.substring(b+1, ece.length()));
             //System.out.println(ece);
         }
