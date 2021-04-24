@@ -11,6 +11,7 @@ public class ExecutionObject{
     public  HashSet<String> declaredVariables = new HashSet<String>();
     public  int number = 1;
     public  ArrayList<String> outputs = new ArrayList<String>();
+    public boolean choose = true;
 
   
 
@@ -28,24 +29,103 @@ public class ExecutionObject{
         }
     }
 
+    public boolean choose(String ece, String name){
+        //true ise br yap çık
+        boolean flag = true;
+        boolean[] ne = new boolean[1];
+        outputs.add("br label %choose");
+        outputs.add("choose:");
+        String[] variables = new String[4];
+        String exp = ece.substring(ece.indexOf("(")+1, ece.lastIndexOf(")"));
+        StringTokenizer a = new StringTokenizer(exp, ",",false);
+        int i=0;
+        while(a.hasMoreTokens()){
+            String tempE = a.nextToken();
+            if(tempE.contains("choose")){
+              
+            }else{
+                tempE= tempE.replaceAll(" ", "");
+                variables[i]=removeParan(tempE, "", ne);
+                if(variables[i].contains("~")){
+                    variables[i] =variables[i].substring(1);
+
+
+                }else if(!variables[i].contains("%")){
+                    variables[i] ="%t" + (number-1);
+                }
+                i++;
+
+            }
+        }
+        //outputs.add("\ndefine i32 @choose"+"(i32 "+variables[0]+", i32 "+variables[1] +", i32 "+variables[3] + ", i32 "+variables[4] + ") {");
+        //outputs.add("\nentry:");
+        outputs.add("%t" + number++ + " = icmp sgt i32 "+ variables[0] + ", 0");
+        outputs.add("br i1 %t" + (number-1) + ", label %greaterEnd, label %equalCheck");
+        outputs.add("greaterEnd:");
+        outputs.add("store i32 " +  variables[2] + ", i32* %" + name);
+        outputs.add("br label %end");
+        outputs.add("equalCheck:");
+        outputs.add("%t" + number++ + " = icmp eq i32 " +variables[0]+ ", 0");
+        outputs.add("br i1 %t" + (number-1) + ", label %equalEnd, label %negativeEnd");
+        outputs.add("equalEnd:");
+        outputs.add("store i32 " +  variables[1] + ", i32* %" + name);
+        outputs.add("br label %end");
+        outputs.add("negativeEnd:");
+        outputs.add("store i32 " +  variables[3] + ", i32* %" + name);
+        outputs.add("br label %end");
+        choose = false;
+        return false;
+        
+        
+        
+
+    }
+    public int findChoose(String ece){
+        int i=0;
+        boolean first = true;
+        int index=0;
+        for(int k=ece.indexOf("choose"); k<ece.length(); k++){
+            if(ece.charAt(k) == ')'){
+                first = false;
+                i--;
+            }else if(ece.charAt(k)=='('){
+                first = false;
+                i++;
+            }
+            if(i == 0 && !first){
+                index = k;
+                break;
+            }
+        }
+        //index += ece.indexOf("choose");
+        return index;
+
+    }
+
     public  void expression(String ece) {
+
+        boolean[] t = new boolean[1];
+        t[0] = true;
 
         if (ece.contains("=")) {
             StringTokenizer dec = new StringTokenizer(ece, "=", false);
             String varName = dec.nextToken();
-            String value = dec.nextToken();
+            String value = dec.nextToken(); 
             String temporary = "";
-            temporary = removeParan(value);
+            temporary = removeParan(value, varName, t);
            // temporary = aticine(value);
-            if(temporary.contains("%")){
+            if(temporary.contains("%") && t[0]){
                 outputs.add("store i32 " + temporary + ", i32* %" + varName); 
             }
-            else if (temporary.charAt(0) != '~') {
+            else if (temporary.charAt(0) != '~' && t[0]) {
                 outputs.add("store i32 %t" + (number - 1) + ", i32* %" + varName);// burda bi bokluk var
-            } else {
+            } else if(t[0]) {
                 outputs.add("store i32 " + value + ", i32* %" + varName);
             }
             declaredVariables.add(varName);
+            //if(!t[0]){
+           // outputs.add("end:");
+            //}
         }
     }
 
@@ -54,6 +134,7 @@ public class ExecutionObject{
         cond.nextToken();
         String printStatement = cond.nextToken();
         printStatement = aticine(printStatement);
+    
         outputs.add("call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " + "%t"
                 + (number - 1) + " )");
     }
@@ -114,7 +195,13 @@ public class ExecutionObject{
     }
 
     // here I handle parantheses
-    public  String removeParan(String ece) {
+    public  String removeParan(String ece, String name, boolean[] check) {
+        if(ece.contains("choose")){
+            int index = findChoose(ece);
+            String temp = ece.substring(ece.indexOf("choose"), index+1);
+            check[0] = choose(temp, name);
+            ece = ece.substring(0,ece.indexOf("choose")) + "%t"+(number-1) + ece.substring(index+1);
+        }
         if(!ece.contains("(")){
             return aticine(ece);
         }
@@ -123,10 +210,12 @@ public class ExecutionObject{
             System.out.println(ece);
             int a = ece.lastIndexOf("(");
             int b = ece.indexOf(")", ece.lastIndexOf("("));
-            ece = ece.substring(0,a) + removeParan(ece.substring(a+1,b)) + ( b == ece.length()-1 ? "" : ece.substring(b+1, ece.length()));
+            String tmp = ece.substring(a+1, b);
+            tmp = removeParan(tmp, "", check);
+            ece = ece.substring(0,a) + tmp + ( b == ece.length()-1 ? "" : ece.substring(b+1, ece.length()));
             System.out.println(ece);
         }
-        return ece;
+        return aticine(ece);
     }
 
 
@@ -142,16 +231,18 @@ public class ExecutionObject{
                 // integerA = false;
                 if (islem.get(i).charAt(0) != '%') { // here means the variable is neither an integer nor a %t variable
                     outputs.add("%t" + number + " = load i32* %" + islem.get(i));
+                    declaredVariables.add(islem.get(i));
                     islem.set(i, "%t" + number++);
                 }
             }
-
+            
             // boolean integerB = true;
             try {
                 int a = Integer.parseInt(islem.get(i + 2));
             } catch (NumberFormatException e) {
                 if (islem.get(i + 2).charAt(0) != '%') {
                     outputs.add("%t" + number + " = load i32* %" + islem.get(i + 2));
+                    declaredVariables.add(islem.get(i+2));
                     islem.set(i + 2, "%t" + number++);
                 }
                 // integerB = false;
@@ -171,7 +262,7 @@ public class ExecutionObject{
                 break;
             case "/":
                 outputs.add("%t" + number++ + " = sdiv i32 " + islem.get(i) + ", " + islem.get(i + 2));
-                islem.set(0, islem.set(0, "%t" + (number - 1)));
+                islem.set(0,"%t" + (number - 1));
                 islem.remove(i + 1);
                 islem.remove(i + 1);
 
@@ -202,17 +293,31 @@ public class ExecutionObject{
         ArrayList<String> son = new ArrayList<String>();
 
         // first tokning to + -
-        if (ali.contains("+") || ali.contains("-")) {
+        if (ali.contains("+") || ali.contains("-")) { 
+            // if(ali.contains("choose")){
+            //     int index = findChoose(ali);
+            //     String temp = ali.substring(ali.indexOf("choose"), index+1);
+            //     choose(temp);
+            //     ali = ali.substring(0,ali.indexOf("choose")) + "%t"+(number-1) + ali.substring(index+1);
+            // }
             StringTokenizer aticine = new StringTokenizer(ali, "+-", true);
             while (aticine.hasMoreTokens()) {
                 ArrayList<String> islem = new ArrayList<String>();
                 String ayse = aticine.nextToken();
                 if (ayse.contains("*") || ayse.contains("/")) {
+                    // if(ayse.contains("choose")){
+                    //     int index = findChoose(ayse);
+                    //     String temp = ayse.substring(ayse.indexOf("choose"), index+1);
+                    //     choose(temp);
+                    //     ayse = ayse.substring(0,ali.indexOf("choose")) + "%t"+(number-1) + ayse.substring(index+1);
+                    // }
                     // below 5 lines can be done with split, will reduce space and time (wpnt
                     // require islem arraylist)
                     StringTokenizer aticine2 = new StringTokenizer(ayse, "*/", true);
                     while (aticine2.hasMoreTokens()) {
-                        islem.add(aticine2.nextToken());
+                        String exp = aticine2.nextToken();
+                        islem.add(exp);
+                        
                     }
                     calculation(islem);
                     // I cant replace the calculation with string here
@@ -222,15 +327,24 @@ public class ExecutionObject{
                 }
             }
         } else if (ali.contains("*") || ali.contains("/")) {
+            // if(ali.contains("choose")){
+            //     int index = findChoose(ali);
+            //     String temp = ali.substring(ali.indexOf("choose"), index+1);
+            //     choose(temp);
+            //     ali = ali.substring(0,ali.indexOf("choose")) + "%t"+(number-1) + ali.substring(index+1);
+            // }
             StringTokenizer aticine = new StringTokenizer(ali, "*/", true);
             ArrayList<String> islem = new ArrayList<String>();
             while (aticine.hasMoreTokens()) {
-                islem.add(aticine.nextToken());
+                String exp = aticine.nextToken();
+               
+                islem.add(exp);
+                
             }
             calculation(islem);
             son.add(islem.get(0));
 
-        } else { // for not expreessions like "n" in while in example
+        }else { // for not expreessions like "n" in while in example
             try {
                 int a = Integer.parseInt(ali);
                 return "~" + ali;

@@ -100,24 +100,24 @@ public class ErrorObject {
      */
 
     private String removePar(String ece) {
-        
-        if(!ece.contains("(")){
+
+        if (!ece.contains("(")) {
             return parser(ece);
         }
 
-        while(ece.contains("(")){
+        while (ece.contains("(")) {
             int a = ece.lastIndexOf("(");
-            if(a == -1){
+            if (a == -1) {
                 error = true;
                 return "2";
             }
             int b = ece.indexOf(")", ece.lastIndexOf("("));
-            ece = ece.substring(0,a) + removePar(ece.substring(a+1,b)) + ( b == ece.length()-1 ? "" : ece.substring(b+1, ece.length()));
+            ece = ece.substring(0, a) + removePar(ece.substring(a + 1, b))
+                    + (b == ece.length() - 1 ? "" : ece.substring(b + 1, ece.length()));
             System.out.println(ece);
         }
         return ece;
     }
-
 
     public String parser(String ali) {
         // first tokning to + -
@@ -208,10 +208,9 @@ public class ErrorObject {
         boolean integer = true;
         for (int i = 0; i < s.length(); i++) {
             char ch = s.charAt(i);
-            if ((int) ch <= 57 && (int) ch >= 48){
+            if ((int) ch <= 57 && (int) ch >= 48) {
                 continue; // if integer
-            } 
-            else if (((int) ch <= 122 && (int) ch >= 97) || ((int) ch <= 90 && (int) ch >= 65))
+            } else if (((int) ch <= 122 && (int) ch >= 97) || ((int) ch <= 90 && (int) ch >= 65))
                 integer = false;
             else
                 return 2;

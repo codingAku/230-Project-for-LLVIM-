@@ -20,7 +20,7 @@ public class Main {
         int lineNum = 0;
         boolean whif = false;
 
-       // exe.expression("a=(3+(3*4))");
+       // exe.expression("W=(%t7+4)+5");
 
         //reading
         while (x.hasNextLine() && !syn.error) {
@@ -37,7 +37,7 @@ public class Main {
             //line types execution
             switch (type) {
             case 1: // expression
-                syn.assignmentCheck(ece);
+               // syn.assignmentCheck(ece);
                 ece = ece.replaceAll(" ", "");
                 if (!syn.error)
                     exe.expression(ece);
@@ -122,8 +122,9 @@ public class Main {
         }
         writer.println();
 
-        for (String s : exe.outputs)
+        for (String s : exe.outputs){
             writer.println(s);
+        }
         writer.close();
     }
 
