@@ -210,7 +210,7 @@ public class ErrorObject {
             char ch = s.charAt(i);
             if ((int) ch <= 57 && (int) ch >= 48) {
                 continue; // if integer
-            } else if (((int) ch <= 122 && (int) ch >= 97) || ((int) ch <= 90 && (int) ch >= 65))
+            } else if (((int) ch <= 122 && (int) ch >= 97) || ((int) ch <= 90 && (int) ch >= 65) || ch == 95)
                 integer = false;
             else
                 return 2;

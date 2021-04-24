@@ -9,9 +9,10 @@ import java.util.StringTokenizer;
 public class ExecutionObject{
     
     public  HashSet<String> declaredVariables = new HashSet<String>();
-    public  int number = 1;
+    public  int number = 0;
     public  ArrayList<String> outputs = new ArrayList<String>();
     public boolean choose = true;
+    public int chooseNum = 1;
 
   
 
@@ -33,8 +34,8 @@ public class ExecutionObject{
         //true ise br yap çık
         boolean flag = true;
         boolean[] ne = new boolean[1];
-        outputs.add("br label %choose");
-        outputs.add("choose:");
+        outputs.add("br label %choose"+chooseNum);
+        outputs.add("choose" + chooseNum+":");
         String[] variables = new String[4];
         String exp = ece.substring(ece.indexOf("(")+1, ece.lastIndexOf(")"));
         StringTokenizer a = new StringTokenizer(exp, ",",false);
@@ -60,19 +61,21 @@ public class ExecutionObject{
         //outputs.add("\ndefine i32 @choose"+"(i32 "+variables[0]+", i32 "+variables[1] +", i32 "+variables[3] + ", i32 "+variables[4] + ") {");
         //outputs.add("\nentry:");
         outputs.add("%t" + number++ + " = icmp sgt i32 "+ variables[0] + ", 0");
-        outputs.add("br i1 %t" + (number-1) + ", label %greaterEnd, label %equalCheck");
-        outputs.add("greaterEnd:");
+        outputs.add("br i1 %t" + (number-1) + ", label %greaterEnd"+chooseNum+", label %equalCheck" + chooseNum);
+        outputs.add("greaterEnd"+chooseNum+":");
         outputs.add("store i32 " +  variables[2] + ", i32* %" + name);
-        outputs.add("br label %end");
-        outputs.add("equalCheck:");
+        outputs.add("br label %end"+chooseNum);
+        outputs.add("equalCheck"+chooseNum+":");
         outputs.add("%t" + number++ + " = icmp eq i32 " +variables[0]+ ", 0");
-        outputs.add("br i1 %t" + (number-1) + ", label %equalEnd, label %negativeEnd");
-        outputs.add("equalEnd:");
+        outputs.add("br i1 %t" + (number-1) + ", label %equalEnd"+chooseNum+", label %negativeEnd" + chooseNum);
+        outputs.add("equalEnd"+chooseNum+":");
         outputs.add("store i32 " +  variables[1] + ", i32* %" + name);
-        outputs.add("br label %end");
-        outputs.add("negativeEnd:");
+        outputs.add("br label %end"+chooseNum);
+        outputs.add("negativeEnd"+chooseNum+":");
         outputs.add("store i32 " +  variables[3] + ", i32* %" + name);
-        outputs.add("br label %end");
+        outputs.add("br label %end"+chooseNum);
+        outputs.add("end"+chooseNum+":");
+        chooseNum++;
         choose = false;
         return false;
         
@@ -261,6 +264,7 @@ public class ExecutionObject{
 
                 break;
             case "/":
+        
                 outputs.add("%t" + number++ + " = sdiv i32 " + islem.get(i) + ", " + islem.get(i + 2));
                 islem.set(0,"%t" + (number - 1));
                 islem.remove(i + 1);

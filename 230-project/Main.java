@@ -17,7 +17,7 @@ public class Main {
         ErrorObject syn = new ErrorObject();
         ExecutionObject exe = new ExecutionObject();
         int while_if = 0;
-        int lineNum = 0;
+        int lineNum = 0-1;
         boolean whif = false;
 
        // exe.expression("W=(%t7+4)+5");
