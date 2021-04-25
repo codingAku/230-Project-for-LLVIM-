@@ -3,6 +3,185 @@ import java.util.StringTokenizer;
 public class ErrorObject {
     public boolean error = false;
 
+    public String checkChoose(String ece){
+       while(ece.contains("choose")){
+            int a = ece.indexOf("choose");
+            int b = ece.findChoose();
+            if(ece.substring( a + 6, ece.indexOf( "(" , a+6 )).replaceAll(" ", "").length() != 0){
+                error = true;
+                return "";
+            }
+
+
+            int choclose = b + 1;
+            if(choClose == 0){
+                error = 0;
+                return "";
+            }
+
+            String cho = ece.substring(a + 7, b); //inside choose phar
+            insideCheck(cho);
+            if(error == true) return "";
+
+            ece = ece.substring(0,a+6) + "1" + ece.substring()
+        } 
+        
+        
+    }
+    
+    public void insideCheck(String s){
+        StringTokenizer tok = new StringTokenizer(cho , "," , false);
+        int i = 0;
+        while(tok.hasNextToken() && i != 4){
+            String k = tok.nextToken();
+            if(k.contains("choose")){
+                String temp = k.substring(k.indexOf("choose"), findChoose(k)+1);
+                checkChoose(temp);
+                if(error == true) return;
+                ece = ece.substring(0, ece.indexOf("choose")) + "1" + ece.substring(findChoose(ece)+1);
+            }
+            tok = new StringTokenizer(ece, ",", false);
+            for(int j = 0; j<= i ; j++){
+                tok.nextToken();
+            }
+
+            }else{
+                if(removePhar(k) == "2") return;
+            }
+            i++;
+        }
+
+        if(tok.hasnextToken()){
+            error = true;
+            return;
+        }
+
+
+    }
+
+
+    public int findChoose(String ece){
+        int i=0;
+        boolean first = true;
+        int index=0;
+        for(int k=ece.indexOf("choose"); k<ece.length(); k++){
+            if(ece.charAt(k) == ')'){
+                first = false;
+                if(i < 0){
+                    error = true;
+                    return 0;
+                }
+                i--;
+            }else if(ece.charAt(k)=='('){
+                first = false;
+                i++;
+            }
+            if(i == 0 && !first){
+                index = k;
+                break;
+            }
+        }
+        //index += ece.indexOf("choose");
+        return index;
+
+    }
+
+    public  void expression(String ece) {
+
+        String temporary = "";
+        
+        if (ece.contains("=")) {
+            StringTokenizer dec = new StringTokenizer(ece, "=", false);
+            String varName = dec.nextToken();
+            String value = dec.nextToken(); 
+            if(value.contains("choose")){
+            value = choose(value);
+            chooseNum += depth;
+            depth = 0;
+            }
+            temporary = removeParan(value);
+           // temporary = aticine(value);
+            if(temporary.contains("%")){
+                outputs.add("store i32 " + temporary + ", i32* %" + varName); 
+            }
+            else if (temporary.charAt(0) != '~') {
+                outputs.add("store i32 %t" + (number - 1) + ", i32* %" + varName);// burda bi bokluk var
+            } else  {
+                outputs.add("store i32 " + value + ", i32* %" + varName);
+            }
+            declaredVariables.add(varName);
+            //if(!t[0]){
+           // outputs.add("end:");
+            //}
+        }
+    }
+
+    public  void print(String ece) {
+        StringTokenizer cond = new StringTokenizer(ece, "()", false);
+        cond.nextToken();
+        String printStatement = cond.nextToken();
+        printStatement = aticine(printStatement);
+    
+        outputs.add("call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " + "%t"
+                + (number - 1) + " )");
+    }
+
+    public  int conditioner(String ece) {
+        StringTokenizer cond = new StringTokenizer(ece, "()", false);
+        if (cond.nextToken().equals("while")) {
+            outputs.add("br label %whcond");
+            outputs.add("\n");
+            // StringTokenizer paran = new StringTokenizer(cond.nextToken(), "()", false);
+            outputs.add("whcond:");
+            String test = cond.nextToken();
+            int a = ece.indexOf("(")+1;
+            int b = ece.lastIndexOf(")");
+            String temporary = removeParan(ece.substring(a, b));
+            // temporary = aticine(value);
+            if(temporary.contains("%"))
+                outputs
+                .add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
+            else if (temporary.charAt(0) != '~') {
+                outputs.add("%t" + number++ + " = load i32* %" + temporary);
+                outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-1) + ", 0");
+            } else  {
+                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary.substring(1) + ", 0");
+            }
+            outputs.add("br i1 %t" + (number - 1) + ", label %whbody, label %whend");
+            outputs.add("\n");
+            outputs.add("whbody:");
+            // dont forget whend statement, check
+            return 1;
+
+        } else if (cond.nextToken().equals("if")) {
+            outputs.add("ifcond:");
+            String test = cond.nextToken();
+            int a = ece.indexOf("(");
+            int b = ece.lastIndexOf(")")+1;
+            String temporary = removeParan(ece.substring(a, b));
+            // temporary = aticine(value);
+            if(temporary.contains("%"))
+                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
+            else if (temporary.charAt(0) != '~') {
+                outputs.add("%t" + number++ + " = load i32* %" + temporary);
+                outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-1) + ", 0");
+            }else 
+                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary.substring(1) + ", 0");
+
+            // is this always true or false? where do we set it false or true?
+            outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
+            outputs.add("br i1 %t" + number++ + ", label %ifbody");
+            outputs.add("\n");
+            outputs.add("ifbody:");
+            return 2;
+
+        }
+        return 0;
+
+    }
+
+
+
     public void assignmentCheck(String s) {
         StringTokenizer t = new StringTokenizer(s, "=", false);
         if (t.countTokens() != 2) {
@@ -98,8 +277,10 @@ public class ErrorObject {
      * public static void chooseFunct(String s){
      * System.out.println("define i32 @choose(" + ) }
      */
-
-    private String removePar(String ece) {
+    
+//beware!! this method returns 2 when no error occurs BUT the input 
+//(ece) may really be 2 in this case the program will give error
+private String removePar(String ece) {
 
         if (!ece.contains("(")) {
             return parser(ece);
