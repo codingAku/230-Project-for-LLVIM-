@@ -216,6 +216,8 @@ public class ExecutionObject{
             return 1;
 
         } else if (cond.nextToken().equals("if")) {
+            outputs.add("br label %whcond");
+            outputs.add("\n");
             outputs.add("ifcond:");
             String test = cond.nextToken();
             int a = ece.indexOf("(");
@@ -231,7 +233,6 @@ public class ExecutionObject{
                 outputs.add("%t" + number++ + " = icmp ne i32 " + temporary.substring(1) + ", 0");
 
             // is this always true or false? where do we set it false or true?
-            outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
             outputs.add("br i1 %t" + number++ + ", label %ifbody");
             outputs.add("\n");
             outputs.add("ifbody:");
