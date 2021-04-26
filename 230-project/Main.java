@@ -31,11 +31,12 @@ public class Main {
             //comments
             if (ece.contains("#"))
                 ece = ece.substring(0, ece.indexOf("#"));
-
-            int type = exe.typeChecker(ece);
-             
-            //line types execution
-            switch (type) {
+                
+                int type = exe.typeChecker(ece);
+                
+                //line types execution
+                int keep = 0;
+                switch (type) {
             case 1: // expression
                syn.assignmentCheck(ece);
                 ece = ece.replaceAll(" ", "");
@@ -45,8 +46,8 @@ public class Main {
                     break;
                 }
                 break;
-            case 2: // while/if entrance
-
+            case 2: // while/if entranc
+                keep = lineNum;
                 if (whif) {
                     syn.error = true;
                     break;
@@ -61,8 +62,10 @@ public class Main {
                 break;
             case 3: // while/if enclosure
                 syn.closeCheck(ece);
-                if (syn.error) {
-                    break;
+                if (syn.error || !whif) {
+                    writer.println("Line "+ (keep)+ ": syntax error");
+                    writer.close();
+            return;
                 }
                 if (while_if == 1) {
                     exe.outputs.add("br label %whcond");
@@ -70,6 +73,8 @@ public class Main {
                     exe.outputs.add("whend:" + "\n");
                 } else if (while_if == 2) {
                     exe.outputs.add("br label %ifend");
+                    exe.outputs.add("\n");
+                    exe.outputs.add("ifend:" + "\n");
                 }
                 whif = false;
                 break;
@@ -96,12 +101,12 @@ public class Main {
 
         //checking syntax errors
         if (syn.error) {
-            writer.println("Syntax error on line " + (lineNum));
+            writer.println("Line "+ (lineNum)+ ": syntax error");
             writer.close();
             return;
         }
         if (whif) {
-            writer.println("Syntax error on line " + (lineNum + 1));
+            writer.println("Line "+ (lineNum)+ ": syntax error");
             writer.close();
             return;
         }

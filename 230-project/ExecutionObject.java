@@ -201,8 +201,8 @@ public class ExecutionObject{
             if(temporary.contains("%"))
                 outputs.add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
             else if (temporary.charAt(0) != '~') {
-                outputs.add("%t" + number++ + " = load i32* %" + temporary);
-                outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-1) + ", 0");
+                //outputs.add("%t" + number++ + " = load i32* %" + temporary);
+                outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-2) + ", 0");
             } else  {
                 outputs.add("%t" + number++ + " = icmp ne i32 " + temporary.substring(1) + ", 0");
             }
@@ -223,13 +223,13 @@ public class ExecutionObject{
             if(temporary.contains("%"))
                 outputs.add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
             else if (temporary.charAt(0) != '~') {
-                outputs.add("%t" + number++ + " = load i32* %" + temporary);
-                outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-1) + ", 0");
+                //outputs.add("%t" + number++ + " = load i32* %" + temporary);
+                outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-2) + ", 0");
             }else 
                 outputs.add("%t" + number++ + " = icmp ne i32 " + temporary.substring(1) + ", 0");
 
             // is this always true or false? where do we set it false or true?
-            outputs.add("br i1 %t" + number++ + ", label %ifbody");
+            outputs.add("br i1 %t" + (number-1)+ ", label %ifbody, label %ifend");
             outputs.add("\n");
             outputs.add("ifbody:");
             return 2;
