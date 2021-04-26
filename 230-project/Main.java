@@ -37,7 +37,7 @@ public class Main {
             //line types execution
             switch (type) {
             case 1: // expression
-               // syn.assignmentCheck(ece);
+               syn.assignmentCheck(ece);
                 ece = ece.replaceAll(" ", "");
                 if (!syn.error)
                     exe.expression(ece);

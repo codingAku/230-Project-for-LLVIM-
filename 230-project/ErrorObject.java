@@ -2,61 +2,81 @@ import java.util.StringTokenizer;
 
 public class ErrorObject {
     public boolean error = false;
-
     public String checkChoose(String ece){
        while(ece.contains("choose")){
+           System.out.println(ece);
             int a = ece.indexOf("choose");
-            int b = ece.findChoose();
+            int b = findChoose(ece);
+
+            System.out.println("a");
+
+            if(b == 0){
+                error = true;
+                return "";
+            }
             if(ece.substring( a + 6, ece.indexOf( "(" , a+6 )).replaceAll(" ", "").length() != 0){
                 error = true;
                 return "";
             }
+            System.out.println("B");
 
 
-            int choclose = b + 1;
-            if(choClose == 0){
-                error = 0;
+            int choClose = b + 1;
+            if(choClose == 1){ //if no closing phar exists exists and we still open a bracket
+                error = true;
                 return "";
             }
 
             String cho = ece.substring(a + 7, b); //inside choose phar
-            insideCheck(cho);
+            System.out.println("C");
+
+            ece = ece.substring(0, ece.indexOf("choose")+6) + insideCheck(cho); 
+            System.out.println("d");
+            System.out.println(ece);
+
             if(error == true) return "";
 
-            ece = ece.substring(0,a+6) + "1" + ece.substring()
+            a = ece.indexOf("choose");
+
+            b = findChoose(ece);
+            System.out.println(error);
+            System.out.println(choClose);
+            ece = ece.substring(0,a) + "1" + ece.substring(b+1);
+            System.out.println(ece);
+
         } 
-        
+        return ece;
         
     }
     
-    public void insideCheck(String s){
-        StringTokenizer tok = new StringTokenizer(cho , "," , false);
+    public String insideCheck(String ece){
+        StringTokenizer tok = new StringTokenizer(ece , "," , false);
         int i = 0;
-        while(tok.hasNextToken() && i != 4){
+        while(tok.hasMoreTokens() && i != 4){
             String k = tok.nextToken();
-            if(k.contains("choose")){
+            if(k.contains("choose")){                
                 String temp = k.substring(k.indexOf("choose"), findChoose(k)+1);
                 checkChoose(temp);
-                if(error == true) return;
+                if(error == true) return "";
                 ece = ece.substring(0, ece.indexOf("choose")) + "1" + ece.substring(findChoose(ece)+1);
-            }
-            tok = new StringTokenizer(ece, ",", false);
-            for(int j = 0; j<= i ; j++){
-                tok.nextToken();
-            }
-
+                tok = new StringTokenizer(ece, ",", false);
+                for(int j = 0; j<= i ; j++){
+                    tok.nextToken();
+                }
+                return ece;
             }else{
-                if(removePhar(k) == "2") return;
+                expressionCheck(k);
+                if( error) return "";
             }
             i++;
         }
 
-        if(tok.hasnextToken()){
+        if(tok.hasMoreTokens()){
+            System.out.println("TİLL THE END!!");
             error = true;
-            return;
+            return "";
         }
-
-
+        return ece;
     }
 
 
@@ -86,101 +106,7 @@ public class ErrorObject {
 
     }
 
-    public  void expression(String ece) {
-
-        String temporary = "";
-        
-        if (ece.contains("=")) {
-            StringTokenizer dec = new StringTokenizer(ece, "=", false);
-            String varName = dec.nextToken();
-            String value = dec.nextToken(); 
-            if(value.contains("choose")){
-            value = choose(value);
-            chooseNum += depth;
-            depth = 0;
-            }
-            temporary = removeParan(value);
-           // temporary = aticine(value);
-            if(temporary.contains("%")){
-                outputs.add("store i32 " + temporary + ", i32* %" + varName); 
-            }
-            else if (temporary.charAt(0) != '~') {
-                outputs.add("store i32 %t" + (number - 1) + ", i32* %" + varName);// burda bi bokluk var
-            } else  {
-                outputs.add("store i32 " + value + ", i32* %" + varName);
-            }
-            declaredVariables.add(varName);
-            //if(!t[0]){
-           // outputs.add("end:");
-            //}
-        }
-    }
-
-    public  void print(String ece) {
-        StringTokenizer cond = new StringTokenizer(ece, "()", false);
-        cond.nextToken();
-        String printStatement = cond.nextToken();
-        printStatement = aticine(printStatement);
-    
-        outputs.add("call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " + "%t"
-                + (number - 1) + " )");
-    }
-
-    public  int conditioner(String ece) {
-        StringTokenizer cond = new StringTokenizer(ece, "()", false);
-        if (cond.nextToken().equals("while")) {
-            outputs.add("br label %whcond");
-            outputs.add("\n");
-            // StringTokenizer paran = new StringTokenizer(cond.nextToken(), "()", false);
-            outputs.add("whcond:");
-            String test = cond.nextToken();
-            int a = ece.indexOf("(")+1;
-            int b = ece.lastIndexOf(")");
-            String temporary = removeParan(ece.substring(a, b));
-            // temporary = aticine(value);
-            if(temporary.contains("%"))
-                outputs
-                .add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
-            else if (temporary.charAt(0) != '~') {
-                outputs.add("%t" + number++ + " = load i32* %" + temporary);
-                outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-1) + ", 0");
-            } else  {
-                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary.substring(1) + ", 0");
-            }
-            outputs.add("br i1 %t" + (number - 1) + ", label %whbody, label %whend");
-            outputs.add("\n");
-            outputs.add("whbody:");
-            // dont forget whend statement, check
-            return 1;
-
-        } else if (cond.nextToken().equals("if")) {
-            outputs.add("ifcond:");
-            String test = cond.nextToken();
-            int a = ece.indexOf("(");
-            int b = ece.lastIndexOf(")")+1;
-            String temporary = removeParan(ece.substring(a, b));
-            // temporary = aticine(value);
-            if(temporary.contains("%"))
-                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
-            else if (temporary.charAt(0) != '~') {
-                outputs.add("%t" + number++ + " = load i32* %" + temporary);
-                outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-1) + ", 0");
-            }else 
-                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary.substring(1) + ", 0");
-
-            // is this always true or false? where do we set it false or true?
-            outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number - 2) + ", 0");
-            outputs.add("br i1 %t" + number++ + ", label %ifbody");
-            outputs.add("\n");
-            outputs.add("ifbody:");
-            return 2;
-
-        }
-        return 0;
-
-    }
-
-
+   
 
     public void assignmentCheck(String s) {
         StringTokenizer t = new StringTokenizer(s, "=", false);
@@ -194,7 +120,6 @@ public class ErrorObject {
             error = true;
             return;
         }
-
         expressionCheck(t.nextToken());
     }
 
@@ -206,6 +131,12 @@ public class ErrorObject {
             error = true;
             return;
         }
+
+
+        checkChoose(s);
+
+        if(error) return;
+
         removePar(s);
     }
 
@@ -295,7 +226,6 @@ private String removePar(String ece) {
             int b = ece.indexOf(")", ece.lastIndexOf("("));
             ece = ece.substring(0, a) + removePar(ece.substring(a + 1, b))
                     + (b == ece.length() - 1 ? "" : ece.substring(b + 1, ece.length()));
-            System.out.println(ece);
         }
         return ece;
     }
