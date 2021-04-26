@@ -4,12 +4,8 @@ public class ErrorObject {
     public boolean error = false;
     public String checkChoose(String ece){
        while(ece.contains("choose")){
-           System.out.println(ece);
             int a = ece.indexOf("choose");
             int b = findChoose(ece);
-
-            System.out.println("a");
-
             if(b == 0){
                 error = true;
                 return "";
@@ -18,7 +14,6 @@ public class ErrorObject {
                 error = true;
                 return "";
             }
-            System.out.println("B");
 
 
             int choClose = b + 1;
@@ -28,21 +23,17 @@ public class ErrorObject {
             }
 
             String cho = ece.substring(a + 7, b); //inside choose phar
-            System.out.println("C");
+            ece = ece.substring(0, ece.indexOf("choose")+7) + insideCheck(cho) + ece.substring(b); 
 
-            ece = ece.substring(0, ece.indexOf("choose")+6) + insideCheck(cho); 
-            System.out.println("d");
-            System.out.println(ece);
 
             if(error == true) return "";
 
             a = ece.indexOf("choose");
 
             b = findChoose(ece);
-            System.out.println(error);
-            System.out.println(choClose);
+
+            
             ece = ece.substring(0,a) + "1" + ece.substring(b+1);
-            System.out.println(ece);
 
         } 
         return ece;
@@ -63,16 +54,20 @@ public class ErrorObject {
                 for(int j = 0; j<= i ; j++){
                     tok.nextToken();
                 }
-                return ece;
             }else{
                 expressionCheck(k);
                 if( error) return "";
             }
+
             i++;
         }
 
         if(tok.hasMoreTokens()){
-            System.out.println("TİLL THE END!!");
+            error = true;
+            return "";
+        }
+
+        if(i<4){
             error = true;
             return "";
         }
@@ -133,11 +128,14 @@ public class ErrorObject {
         }
 
 
-        checkChoose(s);
-
+        s = checkChoose(s);
+        System.out.println(s);
         if(error) return;
-
+        
         removePar(s);
+        System.out.println("CH EXPRESSION " + error);
+
+        
     }
 
     public void conditionCheck(String s) {
@@ -219,14 +217,18 @@ private String removePar(String ece) {
 
         while (ece.contains("(")) {
             int a = ece.lastIndexOf("(");
-            if (a == -1) {
+            int b = ece.indexOf(")", ece.lastIndexOf("("));
+            if (b == -1) {
                 error = true;
                 return "2";
             }
-            int b = ece.indexOf(")", ece.lastIndexOf("("));
+
             ece = ece.substring(0, a) + removePar(ece.substring(a + 1, b))
                     + (b == ece.length() - 1 ? "" : ece.substring(b + 1, ece.length()));
         }
+                parser(ece);
+                System.out.println("HOO " +ece + error);
+                
         return ece;
     }
 
@@ -239,15 +241,18 @@ private String removePar(String ece) {
             while (aticine.hasMoreTokens()) {
                 String ayse = aticine.nextToken();
                 if (ayse.contains("*") || ayse.contains("/")) {
-                    ali = ali.replaceAll("\\*", " * ");
-                    ali = ali.replaceAll("\\/", " / ");
+                    ayse = ayse.replaceAll("\\*", " * ");
+                    ayse = ayse.replaceAll("\\/", " / ");
 
                     StringTokenizer aticine2 = new StringTokenizer(ayse, "*/", false);
+                    System.out.println("TTT");
+                    System.out.println(aticine2.countTokens());
+                    System.out.println(ayse);
                     while (aticine2.hasMoreTokens()) {
                         String a = aticine2.nextToken();
                         StringTokenizer b = new StringTokenizer(a, " ", false); // this and below if checks a + b c + d
                                                                                 // also operators sequential without num
-                                                                                // between
+                        System.out.println("QQQQ" + a);                                 // between
                         if (b.countTokens() != 1) {
                             error = true;
                             return "";

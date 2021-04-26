@@ -52,7 +52,6 @@ public class ExecutionObject{
                  int ef = exp.indexOf("(");
                 int cd = findChoose(exp);
                 String s = exp.substring(ef , cd+1);
-                System.out.println(tempE);
                 s = "choose" +s;
                 chooseNum++;
                 exp = choose(exp);
@@ -190,19 +189,17 @@ public class ExecutionObject{
 
     public  int conditioner(String ece) {
         StringTokenizer cond = new StringTokenizer(ece, "()", false);
-        if (cond.nextToken().equals("while")) {
+        String s = cond.nextToken();
+        if (s.equals("while")) {
             outputs.add("br label %whcond");
             outputs.add("\n");
-            // StringTokenizer paran = new StringTokenizer(cond.nextToken(), "()", false);
             outputs.add("whcond:");
             String test = cond.nextToken();
             int a = ece.indexOf("(")+1;
             int b = ece.lastIndexOf(")");
             String temporary = removeParan(ece.substring(a, b));
-            // temporary = aticine(value);
             if(temporary.contains("%"))
-                outputs
-                .add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
+                outputs.add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
             else if (temporary.charAt(0) != '~') {
                 outputs.add("%t" + number++ + " = load i32* %" + temporary);
                 outputs.add("%t" + number++ + " = icmp ne i32 %t" + (number-1) + ", 0");
@@ -215,15 +212,14 @@ public class ExecutionObject{
             // dont forget whend statement, check
             return 1;
 
-        } else if (cond.nextToken().equals("if")) {
-            outputs.add("br label %whcond");
+        } else if (s.equals("if")) {
+            outputs.add("br label %ifcond");
             outputs.add("\n");
             outputs.add("ifcond:");
             String test = cond.nextToken();
-            int a = ece.indexOf("(");
-            int b = ece.lastIndexOf(")")+1;
+            int a = ece.indexOf("(")+1;
+            int b = ece.lastIndexOf(")");
             String temporary = removeParan(ece.substring(a, b));
-            // temporary = aticine(value);
             if(temporary.contains("%"))
                 outputs.add("%t" + number++ + " = icmp ne i32 " + temporary + ", 0");
             else if (temporary.charAt(0) != '~') {
@@ -298,7 +294,6 @@ public class ExecutionObject{
             int a = ece.lastIndexOf("(");
             int b = ece.indexOf(")", ece.lastIndexOf("("));
             String tmp = ece.substring(a+1, b);
-            System.out.println(tmp);
             tmp = removeParan(tmp);
             tmp = tmp.charAt(0) == '~' ? tmp.substring(1) : tmp;
             ece = ece.substring(0,a) + tmp + ( b == ece.length()-1 ? "" : ece.substring(b+1, ece.length()));
