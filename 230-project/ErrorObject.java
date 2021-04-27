@@ -1,3 +1,4 @@
+import java.io.PrintWriter;
 import java.util.StringTokenizer;
 
 public class ErrorObject {
@@ -101,6 +102,16 @@ public class ErrorObject {
 
     }
 
+    public void printError(int lineNum, PrintWriter writer){
+        writer.println("; ModuleID = 'mylang2ir'");
+        writer.println("declare i32 @printf(i8*, ...)");
+        writer.println("@print.str = private constant [22 x i8] c\"" + "Line "+ lineNum +": syntax error\\0A\\00\"");
+        writer.println("define i32 @main() {");
+        writer.println("call i32 (i8*, ...)* @printf(i8* getelementptr ([22 x i8]* @print.str, i32 0, i32 0))");
+        writer.println("ret i32 0");
+        writer.println("}");
+        
+    }
    
 
     public void assignmentCheck(String s) {

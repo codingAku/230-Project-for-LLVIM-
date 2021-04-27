@@ -6,10 +6,9 @@ import java.util.Scanner;
 import java.lang.String;
 
 public class Main {
-   
 
     public static void main(String[] args) throws FileNotFoundException {
-       
+
         File input = new File(args[0]);
         Scanner x = new Scanner(input);
 
@@ -17,28 +16,28 @@ public class Main {
         ErrorObject syn = new ErrorObject();
         ExecutionObject exe = new ExecutionObject();
         int while_if = 0;
-        int lineNum = 0-1;
+        int lineNum = 0 - 1;
         boolean whif = false;
 
-       // exe.expression("W=(%t7+4)+5");
+        // exe.expression("W=(%t7+4)+5");
 
-        //reading
+        // reading
         while (x.hasNextLine() && !syn.error) {
 
             String ece = x.nextLine();
             lineNum++;
             ece = ece.replaceAll("\t", " ");
-            //comments
+            // comments
             if (ece.contains("#"))
                 ece = ece.substring(0, ece.indexOf("#"));
-                
-                int type = exe.typeChecker(ece);
-                
-                //line types execution
-                int keep = 0;
-                switch (type) {
+
+            int type = exe.typeChecker(ece);
+
+            // line types execution
+            int keep = 0;
+            switch (type) {
             case 1: // expression
-               syn.assignmentCheck(ece);
+                syn.assignmentCheck(ece);
                 ece = ece.replaceAll(" ", "");
                 if (!syn.error)
                     exe.expression(ece);
@@ -63,9 +62,9 @@ public class Main {
             case 3: // while/if enclosure
                 syn.closeCheck(ece);
                 if (syn.error || !whif) {
-                    writer.println("Line "+ (keep)+ ": syntax error");
+                    syn.printError(lineNum, writer);
                     writer.close();
-            return;
+                    return;
                 }
                 if (while_if == 1) {
                     exe.outputs.add("br label %whcond");
@@ -88,7 +87,7 @@ public class Main {
 
                 break;
 
-            case 0: //not related lines
+            case 0: // not related lines
                 ece = ece.replaceAll(" ", "");
                 if (ece.length() == 0) {
                     continue;
@@ -98,21 +97,19 @@ public class Main {
             }
         }
 
-
-        //checking syntax errors
+        // checking syntax errors
         if (syn.error) {
-            writer.println("Line "+ (lineNum)+ ": syntax error");
+            syn.printError(lineNum, writer);
             writer.close();
             return;
         }
         if (whif) {
-            writer.println("Line "+ (lineNum)+ ": syntax error");
+            syn.printError(lineNum, writer);
             writer.close();
             return;
         }
 
-
-        //writing 
+        // writing
         writer.println("; ModuleID = \'mylang2ir\' \n" + "declare i32 @printf(i8*, ...)\n"
                 + "@print.str = constant [4 x i8] c\"%d\\0A\\00\" \n\n" + "define i32 @main() {");
         exe.outputs.add("\nret i32 0");
@@ -127,11 +124,10 @@ public class Main {
         }
         writer.println();
 
-        for (String s : exe.outputs){
+        for (String s : exe.outputs) {
             writer.println(s);
         }
         writer.close();
     }
 
-   
 }
