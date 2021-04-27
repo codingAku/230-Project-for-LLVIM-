@@ -5,13 +5,31 @@ import java.io.PrintWriter;
 import java.util.Scanner;
 import java.lang.String;
 
+/**
+ * Main class of the program.
+ * 
+ * 
+ * @author Ecenur Sezer 
+ * @author Demet Yayla
+ */
 public class Main {
 
+    /**
+     * Main method of the program. Reading the lines is done in here. Takes an
+     * argument input file to read. After the lines are read, they are sent to
+     * specify their type. After their type is specified, they are sent to execution
+     * methods according to their types. If there are empty lines or comment lines,
+     * they are skipped. Finally, a PrintWriter object prints the llvm ir
+     * instructions to given argument output file.
+     * 
+     * 
+     * @param args
+     * @throws FileNotFoundException
+     */
     public static void main(String[] args) throws FileNotFoundException {
 
         File input = new File(args[0]);
         Scanner x = new Scanner(input);
-
         PrintWriter writer = new PrintWriter(new File(args[1]));
         ErrorObject syn = new ErrorObject();
         ExecutionObject exe = new ExecutionObject();
@@ -19,24 +37,17 @@ public class Main {
         int lineNum = 0 - 1;
         boolean whif = false;
 
-        // exe.expression("W=(%t7+4)+5");
-
-        // reading
+        // reading line-by-line
         while (x.hasNextLine() && !syn.error) {
-
             String ece = x.nextLine();
             lineNum++;
             ece = ece.replaceAll("\t", " ");
-            // comments
             if (ece.contains("#"))
                 ece = ece.substring(0, ece.indexOf("#"));
-
             int type = exe.typeChecker(ece);
-
-            // line types execution
             int keep = 0;
             switch (type) {
-            case 1: // expression
+            case 1: // assignment
                 syn.assignmentCheck(ece);
                 ece = ece.replaceAll(" ", "");
                 if (!syn.error)
@@ -45,7 +56,7 @@ public class Main {
                     break;
                 }
                 break;
-            case 2: // while/if entranc
+            case 2: // while/if entrance
                 keep = lineNum;
                 if (whif) {
                     syn.error = true;
@@ -62,8 +73,9 @@ public class Main {
             case 3: // while/if enclosure
                 syn.closeCheck(ece);
                 if (syn.error || !whif) {
-                    syn.printError(lineNum, writer);
+                    syn.printError(keep, writer);
                     writer.close();
+                    x.close();
                     return;
                 }
                 if (while_if == 1) {
@@ -87,7 +99,7 @@ public class Main {
 
                 break;
 
-            case 0: // not related lines
+            case 0: // irrelevant lines
                 ece = ece.replaceAll(" ", "");
                 if (ece.length() == 0) {
                     continue;
@@ -101,11 +113,13 @@ public class Main {
         if (syn.error) {
             syn.printError(lineNum, writer);
             writer.close();
+            x.close();
             return;
         }
         if (whif) {
             syn.printError(lineNum, writer);
             writer.close();
+            x.close();
             return;
         }
 
@@ -128,6 +142,6 @@ public class Main {
             writer.println(s);
         }
         writer.close();
+        x.close();
     }
-
 }
