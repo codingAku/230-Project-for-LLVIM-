@@ -30,7 +30,10 @@ public class Main {
 
         File input = new File(args[0]);
         Scanner x = new Scanner(input);
-        PrintWriter writer = new PrintWriter(new File(args[1]));
+        String inputName = input.getName();
+        String outputName = inputName.substring(0, inputName.length()-3);
+        File output = new File(outputName+ ".ll");
+        PrintWriter writer = new PrintWriter(output);
         ErrorObject syn = new ErrorObject();
         ExecutionObject exe = new ExecutionObject();
         int while_if = 0;
